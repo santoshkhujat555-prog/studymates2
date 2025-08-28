@@ -1,12 +1,112 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { GraduationCap, Users, BookOpen, MessageCircle, LogOut } from 'lucide-react';
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+  const { user, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/auth');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
+        <div className="text-center space-y-6 p-8">
+          <div className="flex items-center justify-center mb-4">
+            <GraduationCap className="h-12 w-12 text-primary mr-3" />
+            <h1 className="text-5xl font-bold">StudyMate</h1>
+          </div>
+          <p className="text-xl text-muted-foreground max-w-md">
+            Connect with fellow students, share knowledge, and enhance your learning journey
+          </p>
+          <Button onClick={() => navigate('/auth')} size="lg" className="mt-6">
+            Get Started
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center">
+            <GraduationCap className="h-8 w-8 text-primary mr-2" />
+            <h1 className="text-2xl font-bold">StudyMate</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-muted-foreground">Welcome back!</span>
+            <Button variant="outline" size="sm" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4">Ready to Start Learning?</h2>
+          <p className="text-lg text-muted-foreground">
+            Choose from our study categories and connect with like-minded peers
+          </p>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-card p-6 rounded-lg border text-center">
+            <Users className="h-8 w-8 text-primary mx-auto mb-2" />
+            <h3 className="font-semibold">Connect with Peers</h3>
+            <p className="text-sm text-muted-foreground">Match with students who share your interests</p>
+          </div>
+          <div className="bg-card p-6 rounded-lg border text-center">
+            <BookOpen className="h-8 w-8 text-primary mx-auto mb-2" />
+            <h3 className="font-semibold">Share Resources</h3>
+            <p className="text-sm text-muted-foreground">Upload and download study materials</p>
+          </div>
+          <div className="bg-card p-6 rounded-lg border text-center">
+            <MessageCircle className="h-8 w-8 text-primary mx-auto mb-2" />
+            <h3 className="font-semibold">Join Discussions</h3>
+            <p className="text-sm text-muted-foreground">Participate in subject-wise forums</p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="text-center space-y-4">
+          <h3 className="text-xl font-semibold">Choose Your Learning Path</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <Button variant="outline" size="lg" className="h-20 flex-col">
+              <span className="font-semibold">Engineering</span>
+              <span className="text-sm text-muted-foreground">AI, ML, CS, Mechanical & more</span>
+            </Button>
+            <Button variant="outline" size="lg" className="h-20 flex-col">
+              <span className="font-semibold">Government Exams</span>
+              <span className="text-sm text-muted-foreground">UPSC, SSC, Banking & more</span>
+            </Button>
+            <Button variant="outline" size="lg" className="h-20 flex-col">
+              <span className="font-semibold">College</span>
+              <span className="text-sm text-muted-foreground">Class 12, UG, PG levels</span>
+            </Button>
+          </div>
+        </div>
+      </main>
     </div>
   );
 };
