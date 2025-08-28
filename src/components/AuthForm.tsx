@@ -49,8 +49,12 @@ export const AuthForm = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4">
           <div className="flex items-center justify-center">
-            <GraduationCap className="h-8 w-8 text-primary mr-2" />
-            <CardTitle className="text-2xl font-bold">StudyMate</CardTitle>
+            <img 
+              src="/lovable-uploads/b961a5a2-1ea8-4ae2-a004-5695fca1bd1f.png" 
+              alt="StudyMates Logo" 
+              className="h-12 w-12 mr-2"
+            />
+            <CardTitle className="text-2xl font-bold">StudyMates</CardTitle>
           </div>
           <CardDescription className="text-center">
             Connect with fellow students and enhance your learning journey

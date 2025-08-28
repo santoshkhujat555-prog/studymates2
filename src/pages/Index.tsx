@@ -27,8 +27,12 @@ const Index = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="text-center space-y-6 p-8">
           <div className="flex items-center justify-center mb-4">
-            <GraduationCap className="h-12 w-12 text-primary mr-3" />
-            <h1 className="text-5xl font-bold">StudyMate</h1>
+            <img 
+              src="/lovable-uploads/b961a5a2-1ea8-4ae2-a004-5695fca1bd1f.png" 
+              alt="StudyMates Logo" 
+              className="h-16 w-16 mr-4"
+            />
+            <h1 className="text-5xl font-bold">StudyMates</h1>
           </div>
           <p className="text-xl text-muted-foreground max-w-md">
             Connect with fellow students, share knowledge, and enhance your learning journey
@@ -47,8 +51,12 @@ const Index = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center">
-            <GraduationCap className="h-8 w-8 text-primary mr-2" />
-            <h1 className="text-2xl font-bold">StudyMate</h1>
+            <img 
+              src="/lovable-uploads/b961a5a2-1ea8-4ae2-a004-5695fca1bd1f.png" 
+              alt="StudyMates Logo" 
+              className="h-10 w-10 mr-3"
+            />
+            <h1 className="text-2xl font-bold">StudyMates</h1>
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-muted-foreground">Welcome back!</span>
