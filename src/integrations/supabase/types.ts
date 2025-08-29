@@ -18,44 +18,65 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
+          branch_course: string | null
+          career_goal: string | null
+          competitive_exam: string | null
           created_at: string
           email: string | null
           full_name: string | null
           id: string
           interests: string[] | null
+          mobile_number: string | null
           points: number | null
+          skills: string[] | null
           stream: string | null
           sub_stream: string | null
+          university_name: string | null
           updated_at: string
           user_id: string
+          visibility: boolean | null
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
+          branch_course?: string | null
+          career_goal?: string | null
+          competitive_exam?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           interests?: string[] | null
+          mobile_number?: string | null
           points?: number | null
+          skills?: string[] | null
           stream?: string | null
           sub_stream?: string | null
+          university_name?: string | null
           updated_at?: string
           user_id: string
+          visibility?: boolean | null
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
+          branch_course?: string | null
+          career_goal?: string | null
+          competitive_exam?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
           id?: string
           interests?: string[] | null
+          mobile_number?: string | null
           points?: number | null
+          skills?: string[] | null
           stream?: string | null
           sub_stream?: string | null
+          university_name?: string | null
           updated_at?: string
           user_id?: string
+          visibility?: boolean | null
         }
         Relationships: []
       }

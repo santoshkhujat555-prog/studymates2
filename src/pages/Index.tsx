@@ -60,6 +60,10 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-muted-foreground">Welcome back!</span>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
+              <Users className="h-4 w-4 mr-2" />
+              Profile
+            </Button>
             <Button variant="outline" size="sm" onClick={signOut}>
               <LogOut className="h-4 w-4 mr-2" />
               Logout
