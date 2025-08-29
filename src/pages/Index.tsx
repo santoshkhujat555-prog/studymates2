@@ -96,22 +96,68 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="text-center space-y-4">
-          <h3 className="text-xl font-semibold">Choose Your Learning Path</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-            <Button variant="outline" size="lg" className="h-20 flex-col">
-              <span className="font-semibold">Engineering</span>
-              <span className="text-sm text-muted-foreground">AI, ML, CS, Mechanical & more</span>
-            </Button>
-            <Button variant="outline" size="lg" className="h-20 flex-col">
-              <span className="font-semibold">Government Exams</span>
-              <span className="text-sm text-muted-foreground">UPSC, SSC, Banking & more</span>
-            </Button>
-            <Button variant="outline" size="lg" className="h-20 flex-col">
-              <span className="font-semibold">College</span>
-              <span className="text-sm text-muted-foreground">Class 12, UG, PG levels</span>
-            </Button>
+        {/* Main Action Sections */}
+        <div className="text-center space-y-8">
+          <h3 className="text-xl font-semibold">Choose Your Learning Activity</h3>
+          
+          {/* Create Lobby Section */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-medium text-primary">Create Study Lobby</h4>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Get matched with students who share your academic interests and goals
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="h-20 flex-col"
+                onClick={() => navigate('/lobby')}
+              >
+                <Users className="h-6 w-6 mb-2" />
+                <span className="font-semibold">2 Player Match</span>
+                <span className="text-sm text-muted-foreground">Find a study buddy</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="h-20 flex-col"
+                onClick={() => navigate('/lobby')}
+              >
+                <Users className="h-6 w-6 mb-2" />
+                <span className="font-semibold">4 Player Group</span>
+                <span className="text-sm text-muted-foreground">Join a study group</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Online Quiz Section */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-medium text-primary">Online Quiz Arena</h4>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Challenge yourself and compete with other students in real-time quizzes
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="h-20 flex-col"
+                onClick={() => navigate('/quiz')}
+              >
+                <GraduationCap className="h-6 w-6 mb-2" />
+                <span className="font-semibold">2 Player Quiz</span>
+                <span className="text-sm text-muted-foreground">Head-to-head challenge</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="h-20 flex-col"
+                onClick={() => navigate('/quiz')}
+              >
+                <GraduationCap className="h-6 w-6 mb-2" />
+                <span className="font-semibold">4 Player Quiz</span>
+                <span className="text-sm text-muted-foreground">Group competition</span>
+              </Button>
+            </div>
           </div>
         </div>
       </main>
