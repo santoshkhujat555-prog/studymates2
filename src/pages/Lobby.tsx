@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useLobby } from '@/hooks/useLobby';
-import { ArrowLeft, Users, Trophy, Clock, UserCheck } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, X } from 'lucide-react';
 
 interface LobbyOption {
   id: string;
@@ -60,26 +61,10 @@ const Lobby = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { currentLobby, lobbyMembers, isLoading, findOrCreateLobby, leaveLobby } = useLobby();
-  const [selectedOption, setSelectedOption] = useState<LobbyOption | null>(null);
 
   const handleCreateLobby = async (option: LobbyOption) => {
-    setSelectedOption(option);
-    const lobby = await findOrCreateLobby(option.id, option.players);
-    if (!lobby) {
-      setSelectedOption(null);
-    }
+    await findOrCreateLobby(option.id, option.players);
   };
-
-  const handleLeaveLobby = () => {
-    leaveLobby();
-    setSelectedOption(null);
-  };
-
-  useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -92,30 +77,19 @@ const Lobby = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-3 flex items-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => navigate('/')}
-            className="mr-4"
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="mr-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
           <div className="flex items-center">
-            <img 
-              src="/lovable-uploads/b961a5a2-1ea8-4ae2-a004-5695fca1bd1f.png" 
-              alt="StudyMates Logo" 
-              className="h-8 w-8 mr-3"
-            />
+            <img src="/lovable-uploads/b961a5a2-1ea8-4ae2-a004-5695fca1bd1f.png" alt="StudyMates Logo" className="h-8 w-8 mr-3" />
             <h1 className="text-xl font-bold">Create Study Lobby</h1>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-4">Find Your Study Partners</h2>
@@ -124,122 +98,100 @@ const Lobby = () => {
           </p>
         </div>
 
-        {/* Lobby Options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {lobbyOptions.map((option) => (
-            <Card 
-              key={option.id} 
-              className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary/20"
-              onClick={() => handleCreateLobby(option)}
-            >
+        {/* Active Lobby Status */}
+        {currentLobby && (
+          <div className="mt-8 max-w-lg mx-auto mb-8">
+            <Card className="border-primary/20 bg-primary/5">
               <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                      {option.icon}
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{option.title}</CardTitle>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
-                          {option.players} Players
-                        </Badge>
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs ${getDifficultyColor(option.difficulty)}`}
-                        >
-                          {option.difficulty}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="mb-4">
-                  {option.description}
-                </CardDescription>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {option.estimatedTime}
+                  <div>
+                    <CardTitle className="text-lg">
+                      {currentLobby.status === 'waiting' ? 'Finding Study Partners' : 'Lobby Ready!'}
+                    </CardTitle>
+                    <CardDescription>
+                      {currentLobby.current_players}/{currentLobby.max_players} players in lobby
+                    </CardDescription>
                   </div>
-                  <Button size="sm">
-                    Create Lobby
+                  <Button variant="outline" size="sm" onClick={leaveLobby} disabled={isLoading}>
+                    <X className="h-4 w-4 mr-1" />
+                    Leave
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Lobby Status */}
-        {currentLobby && (
-          <div className="mt-8 max-w-2xl mx-auto">
-            <Card className="border-primary/20 bg-primary/5">
-              <CardHeader className="text-center">
-                <CardTitle className="text-lg">
-                  {currentLobby.status === 'waiting' ? 'Finding Your Study Partners' : 'Lobby Ready!'}
-                </CardTitle>
-                <CardDescription>
-                  {currentLobby.status === 'waiting' 
-                    ? `Waiting for ${currentLobby.max_players - currentLobby.current_players} more player${currentLobby.max_players - currentLobby.current_players !== 1 ? 's' : ''}`
-                    : 'All players have joined! Ready to start.'
-                  }
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 {currentLobby.status === 'waiting' && (
-                  <div className="text-center mb-6">
+                  <div className="text-center mb-4">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                     <p className="text-sm text-muted-foreground">
-                      We're matching you based on your interests, study schedule, and academic goals.
+                      Waiting for {currentLobby.max_players - currentLobby.current_players} more player(s)...
                     </p>
                   </div>
                 )}
-
-                {/* Current Members */}
+                
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">Current Members ({currentLobby.current_players}/{currentLobby.max_players})</h4>
-                  <div className="grid gap-2">
-                    {lobbyMembers.map((member) => (
-                      <div key={member.id} className="flex items-center space-x-3 p-2 bg-card rounded border">
-                        <UserCheck className="h-4 w-4 text-green-500" />
-                        <span className="text-sm font-medium">
-                          {member.profiles?.full_name || 'Anonymous Student'}
-                        </span>
-                        {member.user_id === user?.id && (
-                          <Badge variant="secondary" className="text-xs">You</Badge>
-                        )}
+                  <h4 className="font-medium">Current Members:</h4>
+                  {lobbyMembers.map((member, index) => (
+                    <div key={member.id} className="flex items-center space-x-3 p-2 bg-card rounded-lg border">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={member.profiles?.avatar_url} />
+                        <AvatarFallback>
+                          {member.profiles?.full_name?.charAt(0) || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">
+                          {member.profiles?.full_name || 'Anonymous'}
+                          {member.user_id === user?.id && ' (You)'}
+                        </p>
                       </div>
-                    ))}
-                    
-                    {/* Empty slots */}
-                    {Array.from({ length: currentLobby.max_players - currentLobby.current_players }).map((_, index) => (
-                      <div key={`empty-${index}`} className="flex items-center space-x-3 p-2 border border-dashed rounded">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Waiting for player...</span>
-                      </div>
-                    ))}
-                  </div>
+                      {index === 0 && <Badge variant="outline" className="text-xs">Host</Badge>}
+                    </div>
+                  ))}
                 </div>
 
-                <div className="flex gap-2 mt-6">
-                  {currentLobby.status === 'full' && (
-                    <Button className="flex-1">
-                      Start Session
-                    </Button>
-                  )}
-                  <Button 
-                    variant="outline" 
-                    onClick={handleLeaveLobby}
-                    disabled={isLoading}
-                  >
-                    Leave Lobby
-                  </Button>
-                </div>
+                {currentLobby.status === 'full' && (
+                  <div className="mt-4 p-3 bg-green-500/10 text-green-600 border border-green-500/20 rounded-lg text-center">
+                    <p className="font-medium">Lobby is full! Ready to start studying!</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
+          </div>
+        )}
+
+        {/* Lobby Options - Only show if not in a lobby */}
+        {!currentLobby && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {lobbyOptions.map((option) => (
+              <Card key={option.id} className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary/20" onClick={() => !isLoading && handleCreateLobby(option)}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary">{option.icon}</div>
+                      <div>
+                        <CardTitle className="text-lg">{option.title}</CardTitle>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Badge variant="outline" className="text-xs">{option.players} Players</Badge>
+                          <Badge variant="outline" className={`text-xs ${getDifficultyColor(option.difficulty)}`}>{option.difficulty}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="mb-4">{option.description}</CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4 mr-1" />
+                      {option.estimatedTime}
+                    </div>
+                    <Button size="sm" disabled={isLoading}>
+                      {isLoading ? 'Creating...' : 'Create Lobby'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
       </main>

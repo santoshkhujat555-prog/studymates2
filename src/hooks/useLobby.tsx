@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from './useAuth';
+import { toast } from 'sonner';
 
-interface LobbyData {
+export interface Lobby {
   id: string;
   created_by: string;
-  lobby_type: string;
+  lobby_type: 'study-match-2' | 'study-match-4' | 'peer-review-2' | 'collaborative-4';
   max_players: number;
   current_players: number;
   status: 'waiting' | 'full' | 'active' | 'completed';
@@ -14,7 +14,7 @@ interface LobbyData {
   expires_at: string;
 }
 
-interface LobbyMember {
+export interface LobbyMember {
   id: string;
   lobby_id: string;
   user_id: string;
@@ -27,32 +27,50 @@ interface LobbyMember {
 
 export const useLobby = () => {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const [currentLobby, setCurrentLobby] = useState<LobbyData | null>(null);
+  const [currentLobby, setCurrentLobby] = useState<Lobby | null>(null);
   const [lobbyMembers, setLobbyMembers] = useState<LobbyMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Create a new lobby
-  const createLobby = useCallback(async (lobbyType: string, maxPlayers: number) => {
-    if (!user) return null;
+  // Find existing lobby or create new one
+  const findOrCreateLobby = useCallback(async (lobbyType: string, maxPlayers: number) => {
+    if (!user) {
+      toast.error('You must be logged in to create a lobby');
+      return null;
+    }
 
     setIsLoading(true);
     try {
-      // First check if user is already in a lobby
-      const { data: existingMember } = await supabase
-        .from('lobby_members')
-        .select('lobby_id, lobbies(*)')
-        .eq('user_id', user.id)
-        .eq('lobbies.status', 'waiting')
-        .single();
+      // First, try to find an existing waiting lobby of the same type
+      const { data: existingLobbies } = await supabase
+        .from('lobbies')
+        .select('*')
+        .eq('lobby_type', lobbyType)
+        .eq('status', 'waiting')
+        .lt('current_players', maxPlayers)
+        .order('created_at', { ascending: true });
 
-      if (existingMember) {
-        toast({
-          title: "Already in lobby",
-          description: "You're already in a waiting lobby. Leave it first to create a new one.",
-        });
-        setCurrentLobby(existingMember.lobbies as LobbyData);
-        return existingMember.lobbies as LobbyData;
+      if (existingLobbies && existingLobbies.length > 0) {
+        // Join existing lobby
+        const lobby = existingLobbies[0];
+        const { error: memberError } = await supabase
+          .from('lobby_members')
+          .insert({
+            lobby_id: lobby.id,
+            user_id: user.id,
+          });
+
+        if (memberError) {
+          if (memberError.code === '23505') { // Already in lobby
+            setCurrentLobby(lobby as Lobby);
+            toast.success('Rejoined existing lobby!');
+            return lobby as Lobby;
+          }
+          throw memberError;
+        }
+
+        setCurrentLobby(lobby as Lobby);
+        toast.success('Joined existing lobby!');
+        return lobby;
       }
 
       // Create new lobby
@@ -68,7 +86,7 @@ export const useLobby = () => {
 
       if (lobbyError) throw lobbyError;
 
-      // Add creator to lobby members
+      // Join the created lobby
       const { error: memberError } = await supabase
         .from('lobby_members')
         .insert({
@@ -78,66 +96,17 @@ export const useLobby = () => {
 
       if (memberError) throw memberError;
 
-      setCurrentLobby(lobby as LobbyData);
-      toast({
-        title: "Lobby created!",
-        description: `Waiting for ${maxPlayers - 1} more player${maxPlayers > 2 ? 's' : ''}...`,
-      });
-
-      return lobby as LobbyData;
+      setCurrentLobby(lobby as Lobby);
+      toast.success('Lobby created! Waiting for other players...');
+      return lobby as Lobby;
     } catch (error) {
-      console.error('Error creating lobby:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create lobby. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error creating/joining lobby:', error);
+      toast.error('Failed to create lobby');
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [user, toast]);
-
-  // Join an existing lobby
-  const joinLobby = useCallback(async (lobbyId: string) => {
-    if (!user) return false;
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('lobby_members')
-        .insert({
-          lobby_id: lobbyId,
-          user_id: user.id,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Joined lobby!",
-        description: "You've successfully joined the lobby.",
-      });
-
-      return true;
-    } catch (error: any) {
-      console.error('Error joining lobby:', error);
-      if (error.code === '23505') {
-        toast({
-          title: "Already in lobby",
-          description: "You're already a member of this lobby.",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to join lobby. Please try again.",
-          variant: "destructive",
-        });
-      }
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, toast]);
+  }, [user]);
 
   // Leave current lobby
   const leaveLobby = useCallback(async () => {
@@ -155,83 +124,21 @@ export const useLobby = () => {
 
       setCurrentLobby(null);
       setLobbyMembers([]);
-
-      toast({
-        title: "Left lobby",
-        description: "You've left the lobby successfully.",
-      });
+      toast.success('Left lobby');
     } catch (error) {
       console.error('Error leaving lobby:', error);
-      toast({
-        title: "Error",
-        description: "Failed to leave lobby. Please try again.",
-        variant: "destructive",
-      });
+      toast.error('Failed to leave lobby');
     } finally {
       setIsLoading(false);
     }
-  }, [user, currentLobby, toast]);
-
-  // Find and join available lobby or create new one
-  const findOrCreateLobby = useCallback(async (lobbyType: string, maxPlayers: number) => {
-    if (!user) return null;
-
-    setIsLoading(true);
-    try {
-      // First try to find an available lobby
-      const { data: availableLobbies } = await supabase
-        .from('lobbies')
-        .select('*')
-        .eq('lobby_type', lobbyType)
-        .eq('status', 'waiting')
-        .lt('current_players', maxPlayers)
-        .order('created_at', { ascending: true })
-        .limit(1);
-
-      if (availableLobbies && availableLobbies.length > 0) {
-        const success = await joinLobby(availableLobbies[0].id);
-        if (success) {
-          setCurrentLobby(availableLobbies[0] as LobbyData);
-          return availableLobbies[0] as LobbyData;
-        }
-      }
-
-      // If no available lobby, create a new one
-      return await createLobby(lobbyType, maxPlayers);
-    } catch (error) {
-      console.error('Error finding or creating lobby:', error);
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, joinLobby, createLobby]);
-
-  // Load lobby members
-  const loadLobbyMembers = useCallback(async (lobbyId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('lobby_members')
-        .select(`
-          *,
-          profiles!lobby_members_user_id_fkey (
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('lobby_id', lobbyId);
-
-      if (error) throw error;
-      setLobbyMembers((data || []) as LobbyMember[]);
-    } catch (error) {
-      console.error('Error loading lobby members:', error);
-    }
-  }, []);
+  }, [user, currentLobby]);
 
   // Set up real-time subscriptions
   useEffect(() => {
     if (!currentLobby) return;
 
-    const channel = supabase
+    // Subscribe to lobby updates
+    const lobbyChannel = supabase
       .channel('lobby-updates')
       .on(
         'postgres_changes',
@@ -243,13 +150,24 @@ export const useLobby = () => {
         },
         (payload) => {
           if (payload.eventType === 'UPDATE') {
-            setCurrentLobby(payload.new as LobbyData);
+            setCurrentLobby(payload.new as Lobby);
+            
+            // Notify when lobby is full
+            if ((payload.new as Lobby).status === 'full') {
+              toast.success('Lobby is full! Ready to start!');
+            }
           } else if (payload.eventType === 'DELETE') {
             setCurrentLobby(null);
             setLobbyMembers([]);
+            toast.info('Lobby was closed');
           }
         }
       )
+      .subscribe();
+
+    // Subscribe to lobby member updates
+    const membersChannel = supabase
+      .channel('lobby-members-updates')
       .on(
         'postgres_changes',
         {
@@ -258,37 +176,69 @@ export const useLobby = () => {
           table: 'lobby_members',
           filter: `lobby_id=eq.${currentLobby.id}`,
         },
-        () => {
-          loadLobbyMembers(currentLobby.id);
+        async () => {
+          // Fetch updated member list
+          const { data: members } = await supabase
+            .from('lobby_members')
+            .select(`
+              *,
+              profiles (
+                full_name,
+                avatar_url
+              )
+            `)
+            .eq('lobby_id', currentLobby.id);
+
+          if (members) {
+            setLobbyMembers(members as LobbyMember[]);
+          }
         }
       )
       .subscribe();
 
-    // Load initial members
-    loadLobbyMembers(currentLobby.id);
+    // Initial fetch of lobby members
+    const fetchMembers = async () => {
+      const { data: members } = await supabase
+        .from('lobby_members')
+        .select(`
+          *,
+          profiles (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('lobby_id', currentLobby.id);
+
+      if (members) {
+        setLobbyMembers(members as LobbyMember[]);
+      }
+    };
+
+    fetchMembers();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(lobbyChannel);
+      supabase.removeChannel(membersChannel);
     };
-  }, [currentLobby?.id, loadLobbyMembers]);
+  }, [currentLobby]);
 
-  // Check for existing lobby on mount
+  // Check if user is already in a lobby on mount
   useEffect(() => {
     if (!user) return;
 
     const checkExistingLobby = async () => {
-      const { data } = await supabase
+      const { data: memberData } = await supabase
         .from('lobby_members')
-        .select(`
-          lobby_id, 
-          lobbies!lobby_members_lobby_id_fkey (*)
-        `)
+        .select('lobby_id, lobbies(*)')
         .eq('user_id', user.id)
-        .eq('lobbies.status', 'waiting')
-        .maybeSingle();
+        .order('joined_at', { ascending: false })
+        .limit(1);
 
-      if (data?.lobbies) {
-        setCurrentLobby(data.lobbies as LobbyData);
+      if (memberData && memberData.length > 0) {
+        const lobby = (memberData[0] as any).lobbies;
+        if (lobby && (lobby.status === 'waiting' || lobby.status === 'full')) {
+          setCurrentLobby(lobby as Lobby);
+        }
       }
     };
 
@@ -299,9 +249,7 @@ export const useLobby = () => {
     currentLobby,
     lobbyMembers,
     isLoading,
-    createLobby,
-    joinLobby,
-    leaveLobby,
     findOrCreateLobby,
+    leaveLobby,
   };
 };
