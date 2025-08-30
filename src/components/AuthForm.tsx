@@ -8,8 +8,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { Loader2, GraduationCap } from 'lucide-react';
 
 export const AuthForm = () => {
-  const { signIn, signUp, loading } = useAuth();
+  const { signIn, signUp, loading, user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,7 +33,10 @@ export const AuthForm = () => {
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
     
-    await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, fullName);
+    if (!error) {
+      setVerificationSent(true);
+    }
     setIsSubmitting(false);
   };
 
@@ -40,6 +44,37 @@ export const AuthForm = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (verificationSent) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5 px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-4 text-center">
+            <div className="flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/b961a5a2-1ea8-4ae2-a004-5695fca1bd1f.png" 
+                alt="StudyMates Logo" 
+                className="h-12 w-12 mr-2"
+              />
+              <CardTitle className="text-2xl font-bold">StudyMates</CardTitle>
+            </div>
+            <CardDescription>
+              Check your email for a verification link to complete your registration.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              onClick={() => setVerificationSent(false)} 
+              variant="outline" 
+              className="w-full"
+            >
+              Back to Sign In
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
