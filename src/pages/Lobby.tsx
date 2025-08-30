@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft, Users, Trophy, Clock } from 'lucide-react';
+import { useLobby } from '@/hooks/useLobby';
+import { ArrowLeft, Users, Trophy, Clock, UserCheck } from 'lucide-react';
 
 interface LobbyOption {
   id: string;
@@ -58,13 +59,27 @@ const lobbyOptions: LobbyOption[] = [
 const Lobby = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentLobby, lobbyMembers, isLoading, findOrCreateLobby, leaveLobby } = useLobby();
   const [selectedOption, setSelectedOption] = useState<LobbyOption | null>(null);
 
-  const handleCreateLobby = (option: LobbyOption) => {
+  const handleCreateLobby = async (option: LobbyOption) => {
     setSelectedOption(option);
-    // Here you would typically create the lobby and start matching
-    console.log('Creating lobby for:', option.title, 'with', option.players, 'players');
+    const lobby = await findOrCreateLobby(option.id, option.players);
+    if (!lobby) {
+      setSelectedOption(null);
+    }
   };
+
+  const handleLeaveLobby = () => {
+    leaveLobby();
+    setSelectedOption(null);
+  };
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+    }
+  }, [user, navigate]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -158,28 +173,71 @@ const Lobby = () => {
           ))}
         </div>
 
-        {/* Matching Status */}
-        {selectedOption && (
-          <div className="mt-8 max-w-md mx-auto">
+        {/* Lobby Status */}
+        {currentLobby && (
+          <div className="mt-8 max-w-2xl mx-auto">
             <Card className="border-primary/20 bg-primary/5">
               <CardHeader className="text-center">
-                <CardTitle className="text-lg">Finding Your Study Partners</CardTitle>
+                <CardTitle className="text-lg">
+                  {currentLobby.status === 'waiting' ? 'Finding Your Study Partners' : 'Lobby Ready!'}
+                </CardTitle>
                 <CardDescription>
-                  Looking for {selectedOption.players} students interested in {selectedOption.title.toLowerCase()}
+                  {currentLobby.status === 'waiting' 
+                    ? `Waiting for ${currentLobby.max_players - currentLobby.current_players} more player${currentLobby.max_players - currentLobby.current_players !== 1 ? 's' : ''}`
+                    : 'All players have joined! Ready to start.'
+                  }
                 </CardDescription>
               </CardHeader>
-              <CardContent className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  We're matching you based on your interests, study schedule, and academic goals.
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setSelectedOption(null)}
-                >
-                  Cancel Search
-                </Button>
+              <CardContent>
+                {currentLobby.status === 'waiting' && (
+                  <div className="text-center mb-6">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-sm text-muted-foreground">
+                      We're matching you based on your interests, study schedule, and academic goals.
+                    </p>
+                  </div>
+                )}
+
+                {/* Current Members */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm">Current Members ({currentLobby.current_players}/{currentLobby.max_players})</h4>
+                  <div className="grid gap-2">
+                    {lobbyMembers.map((member) => (
+                      <div key={member.id} className="flex items-center space-x-3 p-2 bg-card rounded border">
+                        <UserCheck className="h-4 w-4 text-green-500" />
+                        <span className="text-sm font-medium">
+                          {member.profiles?.full_name || 'Anonymous Student'}
+                        </span>
+                        {member.user_id === user?.id && (
+                          <Badge variant="secondary" className="text-xs">You</Badge>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {/* Empty slots */}
+                    {Array.from({ length: currentLobby.max_players - currentLobby.current_players }).map((_, index) => (
+                      <div key={`empty-${index}`} className="flex items-center space-x-3 p-2 border border-dashed rounded">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Waiting for player...</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 mt-6">
+                  {currentLobby.status === 'full' && (
+                    <Button className="flex-1">
+                      Start Session
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={handleLeaveLobby}
+                    disabled={isLoading}
+                  >
+                    Leave Lobby
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

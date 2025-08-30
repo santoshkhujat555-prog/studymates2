@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      lobbies: {
+        Row: {
+          created_at: string
+          created_by: string
+          current_players: number
+          expires_at: string
+          id: string
+          lobby_type: string
+          max_players: number
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          current_players?: number
+          expires_at?: string
+          id?: string
+          lobby_type: string
+          max_players: number
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          current_players?: number
+          expires_at?: string
+          id?: string
+          lobby_type?: string
+          max_players?: number
+          status?: string
+        }
+        Relationships: []
+      }
+      lobby_members: {
+        Row: {
+          id: string
+          joined_at: string
+          lobby_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          lobby_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          lobby_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lobby_members_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: false
+            referencedRelation: "lobbies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -85,7 +147,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cleanup_expired_lobbies: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
