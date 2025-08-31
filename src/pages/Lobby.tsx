@@ -150,8 +150,31 @@ const Lobby = () => {
                 </div>
 
                 {currentLobby.status === 'full' && (
-                  <div className="mt-4 p-3 bg-green-500/10 text-green-600 border border-green-500/20 rounded-lg text-center">
-                    <p className="font-medium">Lobby is full! Ready to start studying!</p>
+                  <div className="mt-4 space-y-3">
+                    <div className="p-3 bg-green-500/10 text-green-600 border border-green-500/20 rounded-lg text-center">
+                      <p className="font-medium">Lobby is full! Ready to start studying!</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => navigate('/quiz')} 
+                        className="flex-1"
+                        size="sm"
+                      >
+                        Start Quiz Discussion
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          // Create a temporary study room/discussion
+                          const roomId = `study-room-${currentLobby.id}`;
+                          navigate(`/study-room/${roomId}`);
+                        }}
+                        className="flex-1"
+                        size="sm"
+                      >
+                        Join Study Room
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
