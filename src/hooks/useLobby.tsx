@@ -84,7 +84,10 @@ export const useLobby = () => {
         .select()
         .single();
 
-      if (lobbyError) throw lobbyError;
+      if (lobbyError) {
+        console.error('Error creating lobby:', lobbyError);
+        throw lobbyError;
+      }
 
       // Join the created lobby
       const { error: memberError } = await supabase
@@ -94,7 +97,12 @@ export const useLobby = () => {
           user_id: user.id,
         });
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error('Error joining created lobby:', memberError);
+        // If joining failed, try to delete the lobby to avoid orphaned lobbies
+        await supabase.from('lobbies').delete().eq('id', lobby.id);
+        throw memberError;
+      }
 
       setCurrentLobby(lobby as Lobby);
       toast.success('Lobby created! Waiting for other players...');
