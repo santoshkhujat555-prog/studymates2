@@ -4,13 +4,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, GraduationCap } from 'lucide-react';
 
 export const AuthForm = () => {
-  const { signIn, signUp, loading, user } = useAuth();
+  const { signIn, signUp, resetPassword, loading, user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,6 +40,18 @@ export const AuthForm = () => {
     const { error } = await signUp(email, password, fullName);
     if (!error) {
       setVerificationSent(true);
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    const { error } = await resetPassword(resetEmail);
+    if (!error) {
+      setResetEmailSent(true);
+      setShowForgotPassword(false);
     }
     setIsSubmitting(false);
   };
@@ -136,6 +152,75 @@ export const AuthForm = () => {
                     'Sign In'
                   )}
                 </Button>
+                
+                <div className="text-center">
+                  <Dialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+                    <DialogTrigger asChild>
+                      <Button variant="link" type="button" className="text-sm">
+                        Forgot your password?
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogDescription>
+                          Enter your email address and we'll send you a link to reset your password.
+                        </DialogDescription>
+                      </DialogHeader>
+                      {resetEmailSent ? (
+                        <div className="text-center space-y-4">
+                          <p className="text-sm text-muted-foreground">
+                            Password reset email has been sent to {resetEmail}
+                          </p>
+                          <Button 
+                            onClick={() => {
+                              setResetEmailSent(false);
+                              setResetEmail('');
+                            }}
+                            variant="outline"
+                          >
+                            Send Another
+                          </Button>
+                        </div>
+                      ) : (
+                        <form onSubmit={handleForgotPassword} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="reset-email">Email</Label>
+                            <Input
+                              id="reset-email"
+                              type="email"
+                              placeholder="Enter your email"
+                              value={resetEmail}
+                              onChange={(e) => setResetEmail(e.target.value)}
+                              required
+                              disabled={isSubmitting}
+                            />
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setShowForgotPassword(false)}
+                              className="w-full"
+                            >
+                              Cancel
+                            </Button>
+                            <Button type="submit" className="w-full" disabled={isSubmitting}>
+                              {isSubmitting ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Sending...
+                                </>
+                              ) : (
+                                'Send Reset Link'
+                              )}
+                            </Button>
+                          </div>
+                        </form>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </form>
             </TabsContent>
             
