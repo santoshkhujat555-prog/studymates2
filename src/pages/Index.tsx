@@ -100,27 +100,26 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Main Action Sections */}
+        {/* Profile Matching Section - Moved to Top */}
         <div className="text-center space-y-8">
-          <h3 className="text-xl font-semibold">Choose Your Learning Activity</h3>
-          
-          {/* Profile Matching Section */}
           <div className="space-y-4">
-            <h4 className="text-lg font-medium text-primary">Find Study Partners</h4>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            <h3 className="text-2xl font-semibold text-primary">Find Study Partners</h3>
+            <p className="text-lg text-muted-foreground max-w-md mx-auto">
               Discover and connect with fellow students through our matching system
             </p>
             <Button 
               variant="outline" 
               size="lg" 
-              className="h-20 flex-col max-w-sm mx-auto w-full"
+              className="h-24 flex-col max-w-sm mx-auto w-full"
               onClick={() => navigate('/profile-match')}
             >
-              <Heart className="h-6 w-6 mb-2" />
-              <span className="font-semibold">Profile Matching</span>
+              <Heart className="h-8 w-8 mb-2" />
+              <span className="font-semibold text-lg">Profile Matching</span>
               <span className="text-sm text-muted-foreground">Swipe to find study buddies</span>
             </Button>
           </div>
+
+          <h3 className="text-xl font-semibold">Other Learning Activities</h3>
           
           {/* Create Lobby Section */}
           <div className="space-y-4">
