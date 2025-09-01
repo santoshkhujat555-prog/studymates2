@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { GraduationCap, Users, BookOpen, MessageCircle, LogOut } from 'lucide-react';
+import { GraduationCap, Users, BookOpen, MessageCircle, LogOut, Heart } from 'lucide-react';
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
@@ -103,6 +103,24 @@ const Index = () => {
         {/* Main Action Sections */}
         <div className="text-center space-y-8">
           <h3 className="text-xl font-semibold">Choose Your Learning Activity</h3>
+          
+          {/* Profile Matching Section */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-medium text-primary">Find Study Partners</h4>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Discover and connect with fellow students through our matching system
+            </p>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="h-20 flex-col max-w-sm mx-auto w-full"
+              onClick={() => navigate('/profile-match')}
+            >
+              <Heart className="h-6 w-6 mb-2" />
+              <span className="font-semibold">Profile Matching</span>
+              <span className="text-sm text-muted-foreground">Swipe to find study buddies</span>
+            </Button>
+          </div>
           
           {/* Create Lobby Section */}
           <div className="space-y-4">

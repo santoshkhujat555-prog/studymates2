@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Lobby from "./pages/Lobby";
 import Quiz from "./pages/Quiz";
 import Profile from "./pages/Profile";
+import ProfileMatch from "./pages/ProfileMatch";
 import StudyRoom from "./pages/StudyRoom";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/lobby" element={<Lobby />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile-match" element={<ProfileMatch />} />
             <Route path="/study-room/:roomId" element={<StudyRoom />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
