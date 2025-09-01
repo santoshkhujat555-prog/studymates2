@@ -38,15 +38,6 @@ const lobbyOptions: LobbyOption[] = [
     estimatedTime: '45 min'
   },
   {
-    id: 'peer-review-2',
-    title: 'Peer Review Session',
-    description: 'Exchange knowledge and review each other\'s work',
-    players: 2,
-    icon: <Trophy className="h-6 w-6" />,
-    difficulty: 'Medium',
-    estimatedTime: '25 min'
-  },
-  {
     id: 'collaborative-4',
     title: 'Collaborative Learning',
     description: 'Work together on complex problems with 3 other students',
@@ -94,7 +85,7 @@ const Lobby = () => {
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-4">Find Your Study Partners</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Connect with fellow students through our matching system. Choose between 1-on-1 sessions or group studies.
+            Connect with fellow students through our matching system. Choose between study partners or group studies.
           </p>
         </div>
 

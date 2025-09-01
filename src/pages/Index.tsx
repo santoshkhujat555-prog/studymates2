@@ -77,7 +77,7 @@ const Index = () => {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Ready to Start Learning?</h2>
           <p className="text-lg text-muted-foreground">
-            Choose from our study categories and connect with like-minded peers
+            Choose from our study categories and connect with like-minded students
           </p>
         </div>
 
@@ -85,7 +85,7 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-card p-6 rounded-lg border text-center">
             <Users className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold">Connect with Peers</h3>
+            <h3 className="font-semibold">Connect with Students</h3>
             <p className="text-sm text-muted-foreground">Match with students who share your interests</p>
           </div>
           <div className="bg-card p-6 rounded-lg border text-center">

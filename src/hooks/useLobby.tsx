@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 export interface Lobby {
   id: string;
   created_by: string;
-  lobby_type: 'study-match-2' | 'study-match-4' | 'peer-review-2' | 'collaborative-4';
+  lobby_type: 'study-match-2' | 'study-match-4' | 'collaborative-4';
   max_players: number;
   current_players: number;
   status: 'waiting' | 'full' | 'active' | 'completed';
