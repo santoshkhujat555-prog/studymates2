@@ -21,6 +21,8 @@ export type Database = {
           current_players: number
           expires_at: string
           id: string
+          invite_code: string | null
+          is_private: boolean | null
           lobby_type: string
           max_players: number
           status: string
@@ -31,6 +33,8 @@ export type Database = {
           current_players?: number
           expires_at?: string
           id?: string
+          invite_code?: string | null
+          is_private?: boolean | null
           lobby_type: string
           max_players: number
           status?: string
@@ -41,11 +45,54 @@ export type Database = {
           current_players?: number
           expires_at?: string
           id?: string
+          invite_code?: string | null
+          is_private?: boolean | null
           lobby_type?: string
           max_players?: number
           status?: string
         }
         Relationships: []
+      }
+      lobby_invitations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          invite_code: string
+          invitee_email: string | null
+          inviter_id: string
+          lobby_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code: string
+          invitee_email?: string | null
+          inviter_id: string
+          lobby_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code?: string
+          invitee_email?: string | null
+          inviter_id?: string
+          lobby_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lobby_invitations_lobby_id_fkey"
+            columns: ["lobby_id"]
+            isOneToOne: false
+            referencedRelation: "lobbies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lobby_members: {
         Row: {
@@ -150,6 +197,10 @@ export type Database = {
       cleanup_expired_lobbies: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_invite_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
     }
     Enums: {
