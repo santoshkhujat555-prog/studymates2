@@ -102,11 +102,11 @@ const Index = () => {
 
           <h3 className="text-xl font-semibold">Other Learning Activities</h3>
           
-          {/* Create Lobby Section */}
+          {/* Create Quiz Lobby Section */}
           <div className="space-y-4">
-            <h4 className="text-lg font-medium text-primary">Create Study Lobby</h4>
+            <h4 className="text-lg font-medium text-primary">Create Quiz Lobby</h4>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Get matched with students who share your academic interests and goals
+              Create a private quiz room and invite friends to join you for competitive learning
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
               <Button 
@@ -116,8 +116,8 @@ const Index = () => {
                 onClick={() => navigate('/lobby')}
               >
                 <Users className="h-6 w-6 mb-2" />
-                <span className="font-semibold">2 Player Match</span>
-                <span className="text-sm text-muted-foreground">Find a study buddy</span>
+                <span className="font-semibold">2 Player Quiz</span>
+                <span className="text-sm text-muted-foreground">Create & invite a friend</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -126,8 +126,8 @@ const Index = () => {
                 onClick={() => navigate('/lobby')}
               >
                 <Users className="h-6 w-6 mb-2" />
-                <span className="font-semibold">4 Player Group</span>
-                <span className="text-sm text-muted-foreground">Join a study group</span>
+                <span className="font-semibold">4 Player Quiz</span>
+                <span className="text-sm text-muted-foreground">Create & invite your squad</span>
               </Button>
             </div>
           </div>
