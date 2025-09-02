@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useLobby } from '@/hooks/useLobby';
-import { ArrowLeft, Users, Trophy, Clock, X } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, X, Copy, UserPlus, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LobbyOption {
   id: string;
@@ -20,41 +23,57 @@ interface LobbyOption {
 
 const lobbyOptions: LobbyOption[] = [
   {
-    id: 'study-match-2',
-    title: 'Study Buddy Match',
-    description: 'Get matched with a study partner who shares your academic interests',
+    id: 'quiz-2',
+    title: '2 Player Quiz',
+    description: 'Head-to-head quiz competition with a friend',
     players: 2,
     icon: <Users className="h-6 w-6" />,
     difficulty: 'Easy',
-    estimatedTime: '30 min'
+    estimatedTime: '15 min'
   },
   {
-    id: 'study-match-4',
-    title: 'Study Group Formation',
-    description: 'Join a group of 4 students with similar goals and subjects',
-    players: 4,
-    icon: <Users className="h-6 w-6" />,
-    difficulty: 'Medium',
-    estimatedTime: '45 min'
-  },
-  {
-    id: 'collaborative-4',
-    title: 'Collaborative Learning',
-    description: 'Work together on complex problems with 3 other students',
+    id: 'quiz-4',
+    title: '4 Player Quiz',
+    description: 'Group quiz competition with up to 4 players',
     players: 4,
     icon: <Trophy className="h-6 w-6" />,
-    difficulty: 'Hard',
-    estimatedTime: '60 min'
+    difficulty: 'Medium',
+    estimatedTime: '20 min'
   }
 ];
 
 const Lobby = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { currentLobby, lobbyMembers, isLoading, findOrCreateLobby, leaveLobby } = useLobby();
+  const { currentLobby, lobbyMembers, isLoading, createPrivateLobby, joinLobbyByCode, leaveLobby } = useLobby();
+  
+  const [selectedOption, setSelectedOption] = useState<LobbyOption | null>(null);
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const [joinCode, setJoinCode] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const handleCreateLobby = async (option: LobbyOption) => {
-    await findOrCreateLobby(option.id, option.players);
+    setSelectedOption(option);
+    await createPrivateLobby(option.id, option.players);
+  };
+
+  const handleJoinLobby = async () => {
+    if (joinCode.trim()) {
+      const result = await joinLobbyByCode(joinCode.trim());
+      if (result) {
+        setShowJoinDialog(false);
+        setJoinCode('');
+      }
+    }
+  };
+
+  const copyInviteCode = async () => {
+    if (currentLobby?.invite_code) {
+      await navigator.clipboard.writeText(currentLobby.invite_code);
+      setCopied(true);
+      toast.success('Invite code copied!');
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -64,6 +83,54 @@ const Lobby = () => {
       case 'Hard': return 'bg-red-500/10 text-red-600 border-red-500/20';
       default: return 'bg-muted text-muted-foreground';
     }
+  };
+
+  const renderPlayerSlot = (index: number, member?: any) => {
+    const isHost = index === 0;
+    const isEmpty = !member;
+    
+    return (
+      <div 
+        key={index} 
+        className={`p-4 rounded-lg border-2 ${isEmpty ? 'border-dashed border-muted-foreground/30 bg-muted/10' : 'border-primary/20 bg-card'}`}
+      >
+        {isEmpty ? (
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto">
+              <UserPlus className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">Waiting for player</p>
+            {currentLobby?.invite_code && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={copyInviteCode}
+                className="w-full"
+              >
+                {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
+                Invite
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="text-center space-y-2">
+            <Avatar className="w-12 h-12 mx-auto">
+              <AvatarImage src={member.profiles?.avatar_url} />
+              <AvatarFallback>
+                {member.profiles?.full_name?.charAt(0) || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium">
+                {member.profiles?.full_name || 'Anonymous'}
+                {member.user_id === user?.id && ' (You)'}
+              </p>
+              {isHost && <Badge variant="outline" className="text-xs mt-1">Host</Badge>}
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -76,31 +143,31 @@ const Lobby = () => {
           </Button>
           <div className="flex items-center">
             <img src="/lovable-uploads/b961a5a2-1ea8-4ae2-a004-5695fca1bd1f.png" alt="StudyMates Logo" className="h-8 w-8 mr-3" />
-            <h1 className="text-xl font-bold">Create Study Lobby</h1>
+            <h1 className="text-xl font-bold">Quiz Lobby</h1>
           </div>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-4">Find Your Study Partners</h2>
+          <h2 className="text-3xl font-bold mb-4">Create Quiz Lobby</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Connect with fellow students through our matching system. Choose between study partners or group studies.
+            Create a private quiz room and invite friends to join for competitive learning.
           </p>
         </div>
 
-        {/* Active Lobby Status */}
+        {/* Active Lobby */}
         {currentLobby && (
-          <div className="mt-8 max-w-lg mx-auto mb-8">
+          <div className="max-w-2xl mx-auto mb-8">
             <Card className="border-primary/20 bg-primary/5">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-lg">
-                      {currentLobby.status === 'waiting' ? 'Finding Study Partners' : 'Lobby Ready!'}
+                      {selectedOption?.title || 'Quiz Lobby'}
                     </CardTitle>
                     <CardDescription>
-                      {currentLobby.current_players}/{currentLobby.max_players} players in lobby
+                      {currentLobby.current_players}/{currentLobby.max_players} players joined
                     </CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={leaveLobby} disabled={isLoading}>
@@ -109,63 +176,42 @@ const Lobby = () => {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
-                {currentLobby.status === 'waiting' && (
-                  <div className="text-center mb-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-sm text-muted-foreground">
-                      Waiting for {currentLobby.max_players - currentLobby.current_players} more player(s)...
-                    </p>
+              <CardContent className="space-y-4">
+                {/* Invite Code */}
+                {currentLobby.invite_code && (
+                  <div className="p-3 bg-card rounded-lg border text-center">
+                    <p className="text-sm text-muted-foreground mb-2">Share this code with friends:</p>
+                    <div className="flex items-center justify-center space-x-2">
+                      <code className="px-3 py-1 bg-muted rounded text-lg font-mono">
+                        {currentLobby.invite_code}
+                      </code>
+                      <Button variant="outline" size="sm" onClick={copyInviteCode}>
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </div>
                 )}
-                
-                <div className="space-y-3">
-                  <h4 className="font-medium">Current Members:</h4>
-                  {lobbyMembers.map((member, index) => (
-                    <div key={member.id} className="flex items-center space-x-3 p-2 bg-card rounded-lg border">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.profiles?.avatar_url} />
-                        <AvatarFallback>
-                          {member.profiles?.full_name?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">
-                          {member.profiles?.full_name || 'Anonymous'}
-                          {member.user_id === user?.id && ' (You)'}
-                        </p>
-                      </div>
-                      {index === 0 && <Badge variant="outline" className="text-xs">Host</Badge>}
-                    </div>
-                  ))}
+
+                {/* Player Tables */}
+                <div className={`grid ${currentLobby.max_players === 4 ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
+                  {Array.from({ length: currentLobby.max_players }, (_, index) =>
+                    renderPlayerSlot(index, lobbyMembers[index])
+                  )}
                 </div>
 
+                {/* Start Game Button */}
                 {currentLobby.status === 'full' && (
-                  <div className="mt-4 space-y-3">
-                    <div className="p-3 bg-green-500/10 text-green-600 border border-green-500/20 rounded-lg text-center">
-                      <p className="font-medium">Lobby is full! Ready to start studying!</p>
+                  <div className="text-center space-y-3">
+                    <div className="p-3 bg-green-500/10 text-green-600 border border-green-500/20 rounded-lg">
+                      <p className="font-medium">All players joined! Ready to start the quiz!</p>
                     </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        onClick={() => navigate('/quiz')} 
-                        className="flex-1"
-                        size="sm"
-                      >
-                        Start Quiz Discussion
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          // Create a temporary study room/discussion
-                          const roomId = `study-room-${currentLobby.id}`;
-                          navigate(`/study-room/${roomId}`);
-                        }}
-                        className="flex-1"
-                        size="sm"
-                      >
-                        Join Study Room
-                      </Button>
-                    </div>
+                    <Button 
+                      onClick={() => navigate('/quiz')} 
+                      className="w-full"
+                      size="lg"
+                    >
+                      Start Quiz Competition
+                    </Button>
                   </div>
                 )}
               </CardContent>
@@ -173,41 +219,100 @@ const Lobby = () => {
           </div>
         )}
 
-        {/* Lobby Options - Only show if not in a lobby */}
+        {/* Lobby Creation Options - Only show if not in a lobby */}
         {!currentLobby && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {lobbyOptions.map((option) => (
-              <Card key={option.id} className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary/20" onClick={() => !isLoading && handleCreateLobby(option)}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-primary/10 rounded-lg text-primary">{option.icon}</div>
-                      <div>
-                        <CardTitle className="text-lg">{option.title}</CardTitle>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Badge variant="outline" className="text-xs">{option.players} Players</Badge>
-                          <Badge variant="outline" className={`text-xs ${getDifficultyColor(option.difficulty)}`}>{option.difficulty}</Badge>
+          <div className="space-y-8">
+            {/* Join Existing Lobby */}
+            <div className="text-center">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowJoinDialog(true)}
+                className="mb-8"
+              >
+                Join with Invite Code
+              </Button>
+            </div>
+
+            {/* Create New Lobby */}
+            <div>
+              <h3 className="text-xl font-semibold text-center mb-6">Or Create a New Lobby</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                {lobbyOptions.map((option) => (
+                  <Card 
+                    key={option.id} 
+                    className="hover:shadow-lg transition-shadow cursor-pointer border-2 hover:border-primary/20" 
+                    onClick={() => !isLoading && handleCreateLobby(option)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-primary/10 rounded-lg text-primary">{option.icon}</div>
+                          <div>
+                            <CardTitle className="text-lg">{option.title}</CardTitle>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Badge variant="outline" className="text-xs">{option.players} Players</Badge>
+                              <Badge variant="outline" className={`text-xs ${getDifficultyColor(option.difficulty)}`}>
+                                {option.difficulty}
+                              </Badge>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="mb-4">{option.description}</CardDescription>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {option.estimatedTime}
-                    </div>
-                    <Button size="sm" disabled={isLoading}>
-                      {isLoading ? 'Creating...' : 'Create Lobby'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="mb-4">{option.description}</CardDescription>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4 mr-1" />
+                          {option.estimatedTime}
+                        </div>
+                        <Button size="sm" disabled={isLoading}>
+                          {isLoading ? 'Creating...' : 'Create Lobby'}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </div>
         )}
+
+        {/* Join Dialog */}
+        <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Join Quiz Lobby</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Enter Invite Code</label>
+                <Input
+                  placeholder="e.g. ABC12345"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowJoinDialog(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleJoinLobby}
+                  disabled={!joinCode.trim() || isLoading}
+                  className="flex-1"
+                >
+                  Join Lobby
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

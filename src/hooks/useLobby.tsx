@@ -6,12 +6,14 @@ import { toast } from 'sonner';
 export interface Lobby {
   id: string;
   created_by: string;
-  lobby_type: 'study-match-2' | 'study-match-4' | 'collaborative-4';
+  lobby_type: 'quiz-2' | 'quiz-4';
   max_players: number;
   current_players: number;
   status: 'waiting' | 'full' | 'active' | 'completed';
   created_at: string;
   expires_at: string;
+  invite_code?: string;
+  is_private?: boolean;
 }
 
 export interface LobbyMember {
@@ -31,6 +33,116 @@ export const useLobby = () => {
   const [lobbyMembers, setLobbyMembers] = useState<LobbyMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Create private lobby
+  const createPrivateLobby = useCallback(async (lobbyType: string, maxPlayers: number) => {
+    if (!user) {
+      toast.error('You must be logged in to create a lobby');
+      return null;
+    }
+
+    setIsLoading(true);
+    try {
+      // Create new private lobby
+      const { data: lobby, error: lobbyError } = await supabase
+        .from('lobbies')
+        .insert({
+          created_by: user.id,
+          lobby_type: lobbyType,
+          max_players: maxPlayers,
+          is_private: true,
+        })
+        .select()
+        .single();
+
+      if (lobbyError) {
+        console.error('Error creating lobby:', lobbyError);
+        throw lobbyError;
+      }
+
+      // Join the created lobby
+      const { error: memberError } = await supabase
+        .from('lobby_members')
+        .insert({
+          lobby_id: lobby.id,
+          user_id: user.id,
+        });
+
+      if (memberError) {
+        console.error('Error joining created lobby:', memberError);
+        await supabase.from('lobbies').delete().eq('id', lobby.id);
+        throw memberError;
+      }
+
+      setCurrentLobby(lobby as Lobby);
+      toast.success('Private lobby created! Share the invite code to add players.');
+      return lobby as Lobby;
+    } catch (error) {
+      console.error('Error creating private lobby:', error);
+      toast.error('Failed to create private lobby');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Join lobby by invite code
+  const joinLobbyByCode = useCallback(async (inviteCode: string) => {
+    if (!user) {
+      toast.error('You must be logged in to join a lobby');
+      return null;
+    }
+
+    setIsLoading(true);
+    try {
+      // Find lobby by invite code
+      const { data: lobbies } = await supabase
+        .from('lobbies')
+        .select('*')
+        .eq('invite_code', inviteCode.toUpperCase())
+        .eq('status', 'waiting');
+
+      if (!lobbies || lobbies.length === 0) {
+        toast.error('Invalid or expired invite code');
+        return null;
+      }
+
+      const lobby = lobbies[0];
+
+      // Check if lobby is full
+      if (lobby.current_players >= lobby.max_players) {
+        toast.error('This lobby is already full');
+        return null;
+      }
+
+      // Join the lobby
+      const { error: memberError } = await supabase
+        .from('lobby_members')
+        .insert({
+          lobby_id: lobby.id,
+          user_id: user.id,
+        });
+
+      if (memberError) {
+        if (memberError.code === '23505') {
+          setCurrentLobby(lobby as Lobby);
+          toast.success('Rejoined existing lobby!');
+          return lobby as Lobby;
+        }
+        throw memberError;
+      }
+
+      setCurrentLobby(lobby as Lobby);
+      toast.success('Joined lobby successfully!');
+      return lobby as Lobby;
+    } catch (error) {
+      console.error('Error joining lobby:', error);
+      toast.error('Failed to join lobby');
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
   // Find existing lobby or create new one
   const findOrCreateLobby = useCallback(async (lobbyType: string, maxPlayers: number) => {
     if (!user) {
@@ -46,6 +158,7 @@ export const useLobby = () => {
         .select('*')
         .eq('lobby_type', lobbyType)
         .eq('status', 'waiting')
+        .eq('is_private', false)
         .lt('current_players', maxPlayers)
         .order('created_at', { ascending: true });
 
@@ -258,6 +371,8 @@ export const useLobby = () => {
     lobbyMembers,
     isLoading,
     findOrCreateLobby,
+    createPrivateLobby,
+    joinLobbyByCode,
     leaveLobby,
   };
 };
