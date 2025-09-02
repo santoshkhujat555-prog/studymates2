@@ -81,26 +81,7 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-card p-6 rounded-lg border text-center">
-            <Users className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold">Connect with Students</h3>
-            <p className="text-sm text-muted-foreground">Match with students who share your interests</p>
-          </div>
-          <div className="bg-card p-6 rounded-lg border text-center">
-            <BookOpen className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold">Share Resources</h3>
-            <p className="text-sm text-muted-foreground">Upload and download study materials</p>
-          </div>
-          <div className="bg-card p-6 rounded-lg border text-center">
-            <MessageCircle className="h-8 w-8 text-primary mx-auto mb-2" />
-            <h3 className="font-semibold">Join Discussions</h3>
-            <p className="text-sm text-muted-foreground">Participate in subject-wise forums</p>
-          </div>
-        </div>
-
-        {/* Profile Matching Section - Moved to Top */}
+        {/* Profile Matching Section - At Top */}
         <div className="text-center space-y-8">
           <div className="space-y-4">
             <h3 className="text-2xl font-semibold text-primary">Find Study Partners</h3>
@@ -178,6 +159,25 @@ const Index = () => {
                 <span className="font-semibold">4 Player Quiz</span>
                 <span className="text-sm text-muted-foreground">Group competition</span>
               </Button>
+            </div>
+          </div>
+
+          {/* Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+            <div className="bg-card p-6 rounded-lg border text-center">
+              <Users className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold">Connect with Friend</h3>
+              <p className="text-sm text-muted-foreground">Match with students who share your interests</p>
+            </div>
+            <div className="bg-card p-6 rounded-lg border text-center">
+              <BookOpen className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold">Share Resources</h3>
+              <p className="text-sm text-muted-foreground">Upload and download study materials</p>
+            </div>
+            <div className="bg-card p-6 rounded-lg border text-center">
+              <MessageCircle className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold">Join Discussion</h3>
+              <p className="text-sm text-muted-foreground">Participate in subject-wise forums</p>
             </div>
           </div>
         </div>
