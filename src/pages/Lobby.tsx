@@ -52,7 +52,7 @@ const Lobby = () => {
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
-  const [userCodeToInvite, setUserCodeToInvite] = useState('');
+  const [userCode, setUserCode] = useState('');
 
   const handleCreateLobby = async (option: LobbyOption) => {
     setSelectedOption(option);
@@ -69,6 +69,16 @@ const Lobby = () => {
     }
   };
 
+  const handleSendInvite = async () => {
+    if (userCode.trim() && currentLobby) {
+      const result = await sendUserInvitation(userCode.trim(), currentLobby.id);
+      if (result) {
+        setShowInviteDialog(false);
+        setUserCode('');
+      }
+    }
+  };
+
   const copyInviteCode = async () => {
     if (currentLobby?.invite_code) {
       await navigator.clipboard.writeText(currentLobby.invite_code);
@@ -78,15 +88,6 @@ const Lobby = () => {
     }
   };
 
-  const handleSendInvitation = async () => {
-    if (userCodeToInvite.trim() && currentLobby) {
-      const success = await sendUserInvitation(userCodeToInvite.trim(), currentLobby.id);
-      if (success) {
-        setShowInviteDialog(false);
-        setUserCodeToInvite('');
-      }
-    }
-  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -324,7 +325,7 @@ const Lobby = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Invite Player Dialog */}
+        {/* Invite User Dialog */}
         <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
           <DialogContent>
             <DialogHeader>
@@ -335,13 +336,13 @@ const Lobby = () => {
                 <label className="text-sm font-medium">Enter User ID (6 digits)</label>
                 <Input
                   placeholder="e.g. 123456"
-                  value={userCodeToInvite}
-                  onChange={(e) => setUserCodeToInvite(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  value={userCode}
+                  onChange={(e) => setUserCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   className="mt-1"
                   maxLength={6}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Ask your friend for their 6-digit user ID
+                  Enter the 6-digit user ID of the player you want to invite
                 </p>
               </div>
               <div className="flex space-x-2">
@@ -353,16 +354,17 @@ const Lobby = () => {
                   Cancel
                 </Button>
                 <Button 
-                  onClick={handleSendInvitation}
-                  disabled={userCodeToInvite.length !== 6 || isLoading}
+                  onClick={handleSendInvite}
+                  disabled={userCode.length !== 6 || isLoading}
                   className="flex-1"
                 >
-                  Send Invitation
+                  Send Invite
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
+
       </main>
     </div>
   );
