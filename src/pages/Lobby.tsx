@@ -45,12 +45,14 @@ const lobbyOptions: LobbyOption[] = [
 const Lobby = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { currentLobby, lobbyMembers, isLoading, createPrivateLobby, joinLobbyByCode, leaveLobby } = useLobby();
+  const { currentLobby, lobbyMembers, isLoading, createPrivateLobby, joinLobbyByCode, leaveLobby, sendUserInvitation } = useLobby();
   
   const [selectedOption, setSelectedOption] = useState<LobbyOption | null>(null);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [userCodeToInvite, setUserCodeToInvite] = useState('');
 
   const handleCreateLobby = async (option: LobbyOption) => {
     setSelectedOption(option);
@@ -76,6 +78,16 @@ const Lobby = () => {
     }
   };
 
+  const handleSendInvitation = async () => {
+    if (userCodeToInvite.trim() && currentLobby) {
+      const success = await sendUserInvitation(userCodeToInvite.trim(), currentLobby.id);
+      if (success) {
+        setShowInviteDialog(false);
+        setUserCodeToInvite('');
+      }
+    }
+  };
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case 'Easy': return 'bg-green-500/10 text-green-600 border-green-500/20';
@@ -95,23 +107,21 @@ const Lobby = () => {
         className={`p-4 rounded-lg border-2 ${isEmpty ? 'border-dashed border-muted-foreground/30 bg-muted/10' : 'border-primary/20 bg-card'}`}
       >
         {isEmpty ? (
-          <div className="text-center space-y-2">
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto">
-              <UserPlus className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">Waiting for player</p>
-            {currentLobby?.invite_code && (
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto">
+                <UserPlus className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground">Waiting for player</p>
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={copyInviteCode}
+                onClick={() => setShowInviteDialog(true)}
                 className="w-full"
               >
-                {copied ? <Check className="h-4 w-4 mr-1" /> : <Copy className="h-4 w-4 mr-1" />}
-                Invite
+                <UserPlus className="h-4 w-4 mr-1" />
+                Invite Player
               </Button>
-            )}
-          </div>
+            </div>
         ) : (
           <div className="text-center space-y-2">
             <Avatar className="w-12 h-12 mx-auto">
@@ -308,6 +318,46 @@ const Lobby = () => {
                   className="flex-1"
                 >
                   Join Lobby
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Invite Player Dialog */}
+        <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Invite Player</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Enter User ID (6 digits)</label>
+                <Input
+                  placeholder="e.g. 123456"
+                  value={userCodeToInvite}
+                  onChange={(e) => setUserCodeToInvite(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  className="mt-1"
+                  maxLength={6}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Ask your friend for their 6-digit user ID
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowInviteDialog(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSendInvitation}
+                  disabled={userCodeToInvite.length !== 6 || isLoading}
+                  className="flex-1"
+                >
+                  Send Invitation
                 </Button>
               </div>
             </div>

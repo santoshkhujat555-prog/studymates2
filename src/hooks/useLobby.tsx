@@ -229,6 +229,53 @@ export const useLobby = () => {
     }
   }, [user]);
 
+  // Send user invitation
+  const sendUserInvitation = useCallback(async (userCode: string, lobbyId: string) => {
+    if (!user) {
+      toast.error('You must be logged in to send invitations');
+      return false;
+    }
+    
+    setIsLoading(true);
+    try {
+      // Find user by 6-digit code
+      const { data: targetUser, error: userError } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_code', userCode)
+        .single();
+
+      if (userError || !targetUser) {
+        toast.error('User not found with this code');
+        return false;
+      }
+
+      // Create invitation
+      const { error } = await supabase
+        .from('user_invitations')
+        .insert({
+          from_user_id: user.id,
+          to_user_id: targetUser.user_id,
+          lobby_id: lobbyId
+        });
+
+      if (error) {
+        console.error('Error sending invitation:', error);
+        toast.error('Failed to send invitation');
+        return false;
+      }
+
+      toast.success('Invitation sent successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      toast.error('Failed to send invitation');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
   // Leave current lobby
   const leaveLobby = useCallback(async () => {
     if (!user || !currentLobby) return;
@@ -374,5 +421,6 @@ export const useLobby = () => {
     createPrivateLobby,
     joinLobbyByCode,
     leaveLobby,
+    sendUserInvitation,
   };
 };

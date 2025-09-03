@@ -142,6 +142,7 @@ export type Database = {
           sub_stream: string | null
           university_name: string | null
           updated_at: string
+          user_code: string | null
           user_id: string
           visibility: boolean | null
         }
@@ -163,6 +164,7 @@ export type Database = {
           sub_stream?: string | null
           university_name?: string | null
           updated_at?: string
+          user_code?: string | null
           user_id: string
           visibility?: boolean | null
         }
@@ -184,8 +186,39 @@ export type Database = {
           sub_stream?: string | null
           university_name?: string | null
           updated_at?: string
+          user_code?: string | null
           user_id?: string
           visibility?: boolean | null
+        }
+        Relationships: []
+      }
+      user_invitations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          from_user_id: string
+          id: string
+          lobby_id: string
+          status: string
+          to_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          from_user_id: string
+          id?: string
+          lobby_id: string
+          status?: string
+          to_user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          from_user_id?: string
+          id?: string
+          lobby_id?: string
+          status?: string
+          to_user_id?: string
         }
         Relationships: []
       }
@@ -199,6 +232,10 @@ export type Database = {
         Returns: undefined
       }
       generate_invite_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_user_code: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
