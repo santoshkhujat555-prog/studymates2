@@ -45,11 +45,9 @@ const lobbyOptions: LobbyOption[] = [
 const Lobby = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { currentLobby, lobbyMembers, isLoading, createPrivateLobby, joinLobbyByCode, leaveLobby, sendUserInvitation } = useLobby();
+  const { currentLobby, lobbyMembers, isLoading, createPrivateLobby, leaveLobby, sendUserInvitation } = useLobby();
   
   const [selectedOption, setSelectedOption] = useState<LobbyOption | null>(null);
-  const [showJoinDialog, setShowJoinDialog] = useState(false);
-  const [joinCode, setJoinCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [userCode, setUserCode] = useState('');
@@ -59,15 +57,6 @@ const Lobby = () => {
     await createPrivateLobby(option.id, option.players);
   };
 
-  const handleJoinLobby = async () => {
-    if (joinCode.trim()) {
-      const result = await joinLobbyByCode(joinCode.trim());
-      if (result) {
-        setShowJoinDialog(false);
-        setJoinCode('');
-      }
-    }
-  };
 
   const handleSendInvite = async () => {
     if (userCode.trim() && currentLobby) {
@@ -233,20 +222,9 @@ const Lobby = () => {
         {/* Lobby Creation Options - Only show if not in a lobby */}
         {!currentLobby && (
           <div className="space-y-8">
-            {/* Join Existing Lobby */}
-            <div className="text-center">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowJoinDialog(true)}
-                className="mb-8"
-              >
-                Join with Invite Code
-              </Button>
-            </div>
-
             {/* Create New Lobby */}
             <div>
-              <h3 className="text-xl font-semibold text-center mb-6">Or Create a New Lobby</h3>
+              <h3 className="text-xl font-semibold text-center mb-6">Create a New Lobby</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                 {lobbyOptions.map((option) => (
                   <Card 
@@ -289,41 +267,6 @@ const Lobby = () => {
           </div>
         )}
 
-        {/* Join Dialog */}
-        <Dialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Join Quiz Lobby</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Enter Invite Code</label>
-                <Input
-                  placeholder="e.g. ABC12345"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                  className="mt-1"
-                />
-              </div>
-              <div className="flex space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowJoinDialog(false)}
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleJoinLobby}
-                  disabled={!joinCode.trim() || isLoading}
-                  className="flex-1"
-                >
-                  Join Lobby
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         {/* Invite User Dialog */}
         <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>

@@ -163,21 +163,16 @@ const Index = () => {
           </div>
 
           {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12 max-w-2xl mx-auto">
             <div className="bg-card p-6 rounded-lg border text-center">
               <Users className="h-8 w-8 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold">Connect with Friend</h3>
-              <p className="text-sm text-muted-foreground">Match with students who share your interests</p>
+              <h3 className="font-semibold">Connect with Friends</h3>
+              <p className="text-sm text-muted-foreground">Use Profile Matching to find study partners</p>
             </div>
             <div className="bg-card p-6 rounded-lg border text-center">
-              <BookOpen className="h-8 w-8 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold">Share Resources</h3>
-              <p className="text-sm text-muted-foreground">Upload and download study materials</p>
-            </div>
-            <div className="bg-card p-6 rounded-lg border text-center">
-              <MessageCircle className="h-8 w-8 text-primary mx-auto mb-2" />
-              <h3 className="font-semibold">Join Discussion</h3>
-              <p className="text-sm text-muted-foreground">Participate in subject-wise forums</p>
+              <GraduationCap className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold">Quiz Competitions</h3>
+              <p className="text-sm text-muted-foreground">Challenge yourself with 2 or 4 player quizzes</p>
             </div>
           </div>
         </div>

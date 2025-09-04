@@ -85,57 +85,42 @@ export const useLobby = () => {
     }
   }, [user]);
 
-  // Join lobby by invite code
-  const joinLobbyByCode = useCallback(async (inviteCode: string) => {
+  // Join lobby by user invitation (accept invitation)
+  const acceptInvitation = useCallback(async (invitationId: string) => {
     if (!user) {
-      toast.error('You must be logged in to join a lobby');
+      toast.error('You must be logged in to accept invitation');
       return null;
     }
 
     setIsLoading(true);
     try {
-      // Find lobby by invite code
-      const { data: lobbies } = await supabase
-        .from('lobbies')
-        .select('*')
-        .eq('invite_code', inviteCode.toUpperCase())
-        .eq('status', 'waiting');
+      // Update invitation status and get lobby info
+      const { data: invitation, error: updateError } = await supabase
+        .from('user_invitations')
+        .update({ status: 'accepted' })
+        .eq('id', invitationId)
+        .eq('to_user_id', user.id)
+        .select('lobby_id, lobbies(*)')
+        .single();
 
-      if (!lobbies || lobbies.length === 0) {
-        toast.error('Invalid or expired invite code');
-        return null;
-      }
-
-      const lobby = lobbies[0];
-
-      // Check if lobby is full
-      if (lobby.current_players >= lobby.max_players) {
-        toast.error('This lobby is already full');
-        return null;
-      }
+      if (updateError) throw updateError;
 
       // Join the lobby
       const { error: memberError } = await supabase
         .from('lobby_members')
         .insert({
-          lobby_id: lobby.id,
+          lobby_id: invitation.lobby_id,
           user_id: user.id,
         });
 
-      if (memberError) {
-        if (memberError.code === '23505') {
-          setCurrentLobby(lobby as Lobby);
-          toast.success('Rejoined existing lobby!');
-          return lobby as Lobby;
-        }
-        throw memberError;
-      }
+      if (memberError) throw memberError;
 
+      const lobby = (invitation as any).lobbies;
       setCurrentLobby(lobby as Lobby);
-      toast.success('Joined lobby successfully!');
+      toast.success('Successfully joined the lobby!');
       return lobby as Lobby;
     } catch (error) {
-      console.error('Error joining lobby:', error);
+      console.error('Error accepting invitation:', error);
       toast.error('Failed to join lobby');
       return null;
     } finally {
@@ -419,7 +404,7 @@ export const useLobby = () => {
     isLoading,
     findOrCreateLobby,
     createPrivateLobby,
-    joinLobbyByCode,
+    acceptInvitation,
     leaveLobby,
     sendUserInvitation,
   };

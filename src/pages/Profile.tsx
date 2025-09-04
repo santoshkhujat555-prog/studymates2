@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, User, Settings, Camera } from 'lucide-react';
+import { ArrowLeft, User, Settings, Camera, Copy, Check } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -25,6 +25,7 @@ interface Profile {
   career_goal: string | null;
   visibility: boolean | null;
   mobile_number: string | null;
+  user_code: string | null;
 }
 
 const Profile = () => {
@@ -34,6 +35,7 @@ const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '',
     bio: '',
@@ -147,6 +149,18 @@ const Profile = () => {
     setIsSaving(false);
   };
 
+  const copyUserCode = async () => {
+    if (profile?.user_code) {
+      await navigator.clipboard.writeText(profile.user_code);
+      setCopied(true);
+      toast({
+        title: "Copied!",
+        description: "Your user code has been copied to clipboard"
+      });
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -223,6 +237,24 @@ const Profile = () => {
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {/* User Code Section */}
+            {profile?.user_code && (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-primary mb-2">Your User Code</h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Share this 6-digit code with friends to invite them to quiz lobbies
+                </p>
+                <div className="flex items-center justify-between bg-background rounded-md p-3 border">
+                  <code className="text-2xl font-mono font-bold tracking-wider text-primary">
+                    {profile.user_code}
+                  </code>
+                  <Button variant="outline" size="sm" onClick={copyUserCode}>
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Basic Info */}
             <div className="space-y-4">
               <div>
