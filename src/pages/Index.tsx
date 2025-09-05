@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { GraduationCap, Users, BookOpen, MessageCircle, LogOut, Heart } from 'lucide-react';
+import { GraduationCap, Users, BookOpen, MessageCircle, LogOut, Heart, Upload } from 'lucide-react';
 
 const Index = () => {
   const { user, signOut, loading } = useAuth();
@@ -63,6 +63,10 @@ const Index = () => {
             <Button variant="ghost" size="sm" onClick={() => navigate('/profile')}>
               <Users className="h-4 w-4 mr-2" />
               Profile
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/question-upload')}>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Questions
             </Button>
             <Button variant="outline" size="sm" onClick={signOut}>
               <LogOut className="h-4 w-4 mr-2" />

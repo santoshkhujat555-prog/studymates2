@@ -192,6 +192,51 @@ export type Database = {
         }
         Relationships: []
       }
+      questions: {
+        Row: {
+          correct_option: number
+          created_at: string
+          created_by: string | null
+          difficulty_level: string
+          id: string
+          option_1: string
+          option_2: string
+          option_3: string
+          option_4: string
+          question: string
+          question_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          correct_option: number
+          created_at?: string
+          created_by?: string | null
+          difficulty_level: string
+          id?: string
+          option_1: string
+          option_2: string
+          option_3: string
+          option_4: string
+          question: string
+          question_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          correct_option?: number
+          created_at?: string
+          created_by?: string | null
+          difficulty_level?: string
+          id?: string
+          option_1?: string
+          option_2?: string
+          option_3?: string
+          option_4?: string
+          question?: string
+          question_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_invitations: {
         Row: {
           created_at: string

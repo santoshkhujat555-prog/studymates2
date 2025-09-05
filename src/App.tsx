@@ -11,6 +11,7 @@ import Quiz from "./pages/Quiz";
 import Profile from "./pages/Profile";
 import ProfileMatch from "./pages/ProfileMatch";
 import StudyRoom from "./pages/StudyRoom";
+import QuestionUpload from "./pages/QuestionUpload";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile-match" element={<ProfileMatch />} />
             <Route path="/study-room/:roomId" element={<StudyRoom />} />
+            <Route path="/question-upload" element={<QuestionUpload />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
