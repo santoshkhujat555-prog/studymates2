@@ -1,15 +1,17 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Upload, Download, AlertCircle, CheckCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import QuestionsTable from '@/components/QuestionsTable';
 
-interface Question {
-  question_id: string;
+interface QuestionData {
+  question_id?: string;
   question: string;
   option_1: string;
   option_2: string;
@@ -21,50 +23,68 @@ interface Question {
 
 export default function QuestionUpload() {
   const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<{
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadResults, setUploadResults] = useState<{
     success: number;
-    failed: number;
     errors: string[];
   } | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const parseCSV = (csvText: string): Question[] => {
-    const lines = csvText.split('\n').filter(line => line.trim());
-    const questions: Question[] = [];
-    
-    // Skip header row
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-      
-      const columns = line.split(',').map(col => col.trim().replace(/^"|"$/g, ''));
-      
-      if (columns.length >= 8) {
-        const correctOption = parseInt(columns[6]);
-        const difficultyLevel = columns[7].toLowerCase();
-        
-        if (correctOption >= 1 && correctOption <= 4 && 
-            ['easy', 'medium', 'hard'].includes(difficultyLevel)) {
-          questions.push({
-            question_id: columns[0],
-            question: columns[1],
-            option_1: columns[2],
-            option_2: columns[3],
-            option_3: columns[4],
-            option_4: columns[5],
-            correct_option: correctOption,
-            difficulty_level: difficultyLevel
-          });
-        }
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (selectedFile) {
+      if (selectedFile.type === 'text/csv' || selectedFile.name.endsWith('.csv')) {
+        setFile(selectedFile);
+        setUploadResults(null);
+      } else {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a CSV file",
+          variant: "destructive"
+        });
       }
     }
-    
+  };
+
+  const parseCSV = (csvText: string): QuestionData[] => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    const headers = lines[0].split(',').map(h => h.trim());
+    const questions: QuestionData[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+      
+      if (values.length >= 8) {
+        const question: QuestionData = {
+          question_id: values[0] || undefined,
+          question: values[1],
+          option_1: values[2],
+          option_2: values[3],
+          option_3: values[4],
+          option_4: values[5],
+          correct_option: parseInt(values[6]),
+          difficulty_level: values[7].toLowerCase()
+        };
+
+        // Validate difficulty level
+        if (!['easy', 'medium', 'hard'].includes(question.difficulty_level)) {
+          question.difficulty_level = 'medium';
+        }
+
+        // Validate correct option
+        if (![1, 2, 3, 4].includes(question.correct_option)) {
+          continue; // Skip invalid questions
+        }
+
+        questions.push(question);
+      }
+    }
+
     return questions;
   };
 
-  const handleFileUpload = async () => {
+  const handleUpload = async () => {
     if (!file || !user) {
       toast({
         title: "Error",
@@ -74,154 +94,221 @@ export default function QuestionUpload() {
       return;
     }
 
-    setUploading(true);
-    setUploadResult(null);
+    setIsUploading(true);
+    const errors: string[] = [];
+    let successCount = 0;
 
     try {
-      const text = await file.text();
-      const questions = parseCSV(text);
-
-      if (questions.length === 0) {
-        toast({
-          title: "Error",
-          description: "No valid questions found in the file",
-          variant: "destructive"
-        });
-        setUploading(false);
-        return;
-      }
-
-      let successCount = 0;
-      let failedCount = 0;
-      const errors: string[] = [];
+      const csvText = await file.text();
+      const questions = parseCSV(csvText);
 
       for (const question of questions) {
-        try {
-          const { error } = await supabase
-            .from('questions')
-            .insert({
-              ...question,
-              created_by: user.id
-            });
+        const { error } = await supabase
+          .from('questions')
+          .insert({
+            ...question,
+            created_by: user.id
+          });
 
-          if (error) {
-            failedCount++;
-            errors.push(`Question ${question.question_id}: ${error.message}`);
-          } else {
-            successCount++;
-          }
-        } catch (err) {
-          failedCount++;
-          errors.push(`Question ${question.question_id}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        if (error) {
+          errors.push(`Row ${successCount + 1}: ${error.message}`);
+        } else {
+          successCount++;
         }
       }
 
-      setUploadResult({
-        success: successCount,
-        failed: failedCount,
-        errors
-      });
+      setUploadResults({ success: successCount, errors });
 
       if (successCount > 0) {
         toast({
-          title: "Upload Complete",
-          description: `Successfully uploaded ${successCount} questions`,
+          title: "Upload completed",
+          description: `Successfully uploaded ${successCount} questions`
         });
       }
 
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to process the file",
+        title: "Upload failed",
+        description: "Failed to process the CSV file",
         variant: "destructive"
       });
-    } finally {
-      setUploading(false);
     }
+
+    setIsUploading(false);
+  };
+
+  const downloadTemplate = () => {
+    const csvContent = `Question ID,Question,Option 1,Option 2,Option 3,Option 4,Correct Option,Difficulty Level
+Q001,What is the capital of France?,London,Berlin,Paris,Madrid,3,easy
+Q002,Which programming language is used for web development?,Python,JavaScript,C++,Java,2,medium
+Q003,What is 2 + 2?,3,4,5,6,2,easy`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'questions_template.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="container mx-auto py-8 px-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Question Upload Platform</h1>
+          <p className="text-muted-foreground">
+            Upload CSV files to bulk import quiz questions into the system
+          </p>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Upload className="h-6 w-6" />
+              <Download className="h-5 w-5" />
+              Download Template
+            </CardTitle>
+            <CardDescription>
+              Download a sample CSV template with the correct format
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={downloadTemplate} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Download CSV Template
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
               Upload Questions
             </CardTitle>
             <CardDescription>
-              Upload a CSV file with quiz questions in the specified format
+              Upload your CSV file with questions following the template format
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <Alert>
-              <FileText className="h-4 w-4" />
-              <AlertDescription>
-                <strong>CSV Format Required:</strong><br />
-                Question ID, Question, Option 1, Option 2, Option 3, Option 4, Correct Option (1-4), Difficulty Level (easy/medium/hard)
-              </AlertDescription>
-            </Alert>
-
-            <div className="space-y-4">
-              <div>
-                <Input
-                  type="file"
-                  accept=".csv"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  disabled={uploading}
-                />
-              </div>
-
-              <Button 
-                onClick={handleFileUpload}
-                disabled={!file || uploading}
-                className="w-full"
-              >
-                {uploading ? "Uploading..." : "Upload Questions"}
-              </Button>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="csv-file">CSV File</Label>
+              <Input
+                id="csv-file"
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+                className="mt-1"
+              />
             </div>
 
-            {uploadResult && (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="space-y-2">
-                    {uploadResult.success > 0 && (
-                      <div className="flex items-center gap-2 text-green-600">
-                        <CheckCircle className="h-4 w-4" />
-                        <span>{uploadResult.success} questions uploaded successfully</span>
-                      </div>
-                    )}
-                    {uploadResult.failed > 0 && (
-                      <div className="flex items-center gap-2 text-red-600">
-                        <AlertCircle className="h-4 w-4" />
-                        <span>{uploadResult.failed} questions failed to upload</span>
-                      </div>
-                    )}
-                    {uploadResult.errors.length > 0 && (
-                      <div className="mt-4">
-                        <h4 className="font-semibold text-sm">Errors:</h4>
-                        <div className="text-sm text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
-                          {uploadResult.errors.map((error, index) => (
-                            <div key={index} className="text-red-600">{error}</div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+            {file && (
+              <Alert>
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Ready to upload: {file.name} ({Math.round(file.size / 1024)} KB)
+                </AlertDescription>
+              </Alert>
             )}
 
-            <div className="text-sm text-muted-foreground">
-              <h4 className="font-semibold mb-2">Sample CSV format:</h4>
-              <pre className="bg-muted p-3 rounded text-xs overflow-x-auto">
-{`Question ID,Question,Option 1,Option 2,Option 3,Option 4,Correct Option,Difficulty Level
-Q001,What is 2+2?,2,3,4,5,3,easy
-Q002,Capital of France?,London,Berlin,Paris,Madrid,3,medium`}
-              </pre>
+            <Button 
+              onClick={handleUpload} 
+              disabled={!file || isUploading}
+              className="w-full"
+            >
+              {isUploading ? (
+                "Uploading..."
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Questions
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {uploadResults && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                {uploadResults.errors.length === 0 ? (
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-yellow-600" />
+                )}
+                Upload Results
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-green-50 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600">
+                    {uploadResults.success}
+                  </div>
+                  <div className="text-sm text-green-600">
+                    Questions Uploaded
+                  </div>
+                </div>
+                <div className="text-center p-4 bg-red-50 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600">
+                    {uploadResults.errors.length}
+                  </div>
+                  <div className="text-sm text-red-600">
+                    Errors
+                  </div>
+                </div>
+              </div>
+
+              {uploadResults.errors.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">Errors:</h4>
+                  <div className="space-y-1 max-h-40 overflow-y-auto">
+                    {uploadResults.errors.map((error, index) => (
+                      <Alert key={index} variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          {error}
+                        </AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>CSV Format Requirements</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <p><strong>Column Order:</strong></p>
+              <ol className="list-decimal list-inside space-y-1 ml-4">
+                <li>Question ID (optional, can be empty)</li>
+                <li>Question (required)</li>
+                <li>Option 1 (required)</li>
+                <li>Option 2 (required)</li>
+                <li>Option 3 (required)</li>
+                <li>Option 4 (required)</li>
+                <li>Correct Option (required: 1, 2, 3, or 4)</li>
+                <li>Difficulty Level (required: easy, medium, or hard)</li>
+              </ol>
+              <p className="mt-4"><strong>Notes:</strong></p>
+              <ul className="list-disc list-inside space-y-1 ml-4">
+                <li>First row should contain headers</li>
+                <li>Correct Option must be a number from 1-4</li>
+                <li>Difficulty Level must be: easy, medium, or hard</li>
+                <li>Questions with invalid data will be skipped</li>
+              </ul>
             </div>
           </CardContent>
         </Card>
+
+        {/* Questions Table */}
+        <QuestionsTable />
       </div>
     </div>
   );
