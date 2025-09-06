@@ -53,28 +53,47 @@ export default function QuestionUpload() {
     const questions: QuestionData[] = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+      // Enhanced CSV parsing to handle quoted values with commas
+      const values = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let j = 0; j < lines[i].length; j++) {
+        const char = lines[i][j];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim()); // Add the last value
       
       if (values.length >= 8) {
+        // Parse correct_option as integer, but keep other fields as strings
+        const correctOptionValue = parseInt(values[6]);
+        
+        // Skip if correct_option is not a valid number
+        if (isNaN(correctOptionValue) || ![1, 2, 3, 4].includes(correctOptionValue)) {
+          continue;
+        }
+
         const question: QuestionData = {
           question_id: values[0] || undefined,
           question: values[1],
           option_1: values[2],
           option_2: values[3],
-          option_3: values[4],
+          option_3: values[4], 
           option_4: values[5],
-          correct_option: parseInt(values[6]),
+          correct_option: correctOptionValue,
           difficulty_level: values[7].toLowerCase()
         };
 
         // Validate difficulty level
         if (!['easy', 'medium', 'hard'].includes(question.difficulty_level)) {
           question.difficulty_level = 'medium';
-        }
-
-        // Validate correct option
-        if (![1, 2, 3, 4].includes(question.correct_option)) {
-          continue; // Skip invalid questions
         }
 
         questions.push(question);
