@@ -118,83 +118,114 @@ export default function QuestionsTable() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {questions.map((question) => (
-            <Card key={question.id}>
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2">
-                    <CardTitle className="text-lg">
-                      {question.question_id && (
-                        <span className="text-sm text-muted-foreground mr-2">
-                          {question.question_id}:
-                        </span>
-                      )}
-                      {question.question}
-                    </CardTitle>
-                    <div className="flex gap-2 items-center">
-                      <Badge className={getDifficultyColor(question.difficulty_level)}>
-                        {question.difficulty_level}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        Added {new Date(question.created_at).toLocaleDateString()}
-                      </span>
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-3 text-left text-sm font-medium">1) Question ID</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">2) Question</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">3) Option 1</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">4) Option 2</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">5) Option 3</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">6) Option 4</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">7) Correct Option</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">8) Difficulty Level</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {questions.map((question, index) => (
+                    <tr key={question.id} className="border-b hover:bg-muted/30">
+                      <td className="px-4 py-3 text-sm">
+                        {question.question_id || `Q${String(index + 1).padStart(3, '0')}`}
+                      </td>
+                      <td className="px-4 py-3 text-sm max-w-xs truncate" title={question.question}>
+                        {question.question}
+                      </td>
+                      <td className="px-4 py-3 text-sm max-w-xs truncate" title={question.option_1}>
+                        {question.option_1}
+                      </td>
+                      <td className="px-4 py-3 text-sm max-w-xs truncate" title={question.option_2}>
+                        {question.option_2}
+                      </td>
+                      <td className="px-4 py-3 text-sm max-w-xs truncate" title={question.option_3}>
+                        {question.option_3}
+                      </td>
+                      <td className="px-4 py-3 text-sm max-w-xs truncate" title={question.option_4}>
+                        {question.option_4}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <Badge variant="outline" className="bg-green-50 text-green-700">
+                          Option {question.correct_option}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <Badge className={getDifficultyColor(question.difficulty_level)}>
+                          {question.difficulty_level}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedQuestion(
+                              selectedQuestion?.id === question.id ? null : question
+                            )}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {user?.id === question.created_by && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteQuestion(question.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {selectedQuestion && (
+              <div className="border-t p-4 bg-muted/20">
+                <h3 className="font-semibold mb-3">Question Details:</h3>
+                <div className="space-y-3">
+                  <p><strong>Question:</strong> {selectedQuestion.question}</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div className={`p-3 rounded border ${selectedQuestion.correct_option === 1 ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
+                      <span className="font-medium">A) </span>{selectedQuestion.option_1}
+                      {selectedQuestion.correct_option === 1 && <span className="text-green-600 ml-2">✓ Correct</span>}
+                    </div>
+                    <div className={`p-3 rounded border ${selectedQuestion.correct_option === 2 ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
+                      <span className="font-medium">B) </span>{selectedQuestion.option_2}
+                      {selectedQuestion.correct_option === 2 && <span className="text-green-600 ml-2">✓ Correct</span>}
+                    </div>
+                    <div className={`p-3 rounded border ${selectedQuestion.correct_option === 3 ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
+                      <span className="font-medium">C) </span>{selectedQuestion.option_3}
+                      {selectedQuestion.correct_option === 3 && <span className="text-green-600 ml-2">✓ Correct</span>}
+                    </div>
+                    <div className={`p-3 rounded border ${selectedQuestion.correct_option === 4 ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
+                      <span className="font-medium">D) </span>{selectedQuestion.option_4}
+                      {selectedQuestion.correct_option === 4 && <span className="text-green-600 ml-2">✓ Correct</span>}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedQuestion(
-                        selectedQuestion?.id === question.id ? null : question
-                      )}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    {user?.id === question.created_by && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteQuestion(question.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                  <div className="text-sm text-muted-foreground">
+                    <strong>Correct Answer:</strong> Option {selectedQuestion.correct_option} - {getCorrectOptionText(selectedQuestion)}
                   </div>
                 </div>
-              </CardHeader>
-              
-              {selectedQuestion?.id === question.id && (
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      <div className={`p-3 rounded border ${question.correct_option === 1 ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
-                        <span className="font-medium">A) </span>{question.option_1}
-                        {question.correct_option === 1 && <span className="text-green-600 ml-2">✓ Correct</span>}
-                      </div>
-                      <div className={`p-3 rounded border ${question.correct_option === 2 ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
-                        <span className="font-medium">B) </span>{question.option_2}
-                        {question.correct_option === 2 && <span className="text-green-600 ml-2">✓ Correct</span>}
-                      </div>
-                      <div className={`p-3 rounded border ${question.correct_option === 3 ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
-                        <span className="font-medium">C) </span>{question.option_3}
-                        {question.correct_option === 3 && <span className="text-green-600 ml-2">✓ Correct</span>}
-                      </div>
-                      <div className={`p-3 rounded border ${question.correct_option === 4 ? 'bg-green-50 border-green-200' : 'bg-gray-50'}`}>
-                        <span className="font-medium">D) </span>{question.option_4}
-                        {question.correct_option === 4 && <span className="text-green-600 ml-2">✓ Correct</span>}
-                      </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      <strong>Correct Answer:</strong> Option {question.correct_option} - {getCorrectOptionText(question)}
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          ))}
-        </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
