@@ -72,21 +72,29 @@ export default function QuestionUpload() {
       values.push(current.trim()); // Add the last value
       
       if (values.length >= 8) {
-        // Parse correct_option - handle both number format (1,2,3,4) and text format (Option 1, Option 2, etc.)
+        // Parse correct_option - handle multiple formats
         let correctOptionValue: number;
-        const correctOptionText = values[6].toLowerCase().trim();
+        const correctOptionText = values[6].toString().toLowerCase().trim().replace(/['"]/g, '');
         
+        console.log(`Row ${i}: Processing correct_option value: "${values[6]}" -> "${correctOptionText}"`);
+        
+        // Handle various formats: "1", "Option 1", "option 2", "A", "B", "C", "D"
         if (correctOptionText.includes('option')) {
           // Extract number from "Option 1", "option 2", etc.
           const match = correctOptionText.match(/option\s*(\d+)/);
           correctOptionValue = match ? parseInt(match[1]) : NaN;
+        } else if (['a', 'b', 'c', 'd'].includes(correctOptionText)) {
+          // Convert A/B/C/D to 1/2/3/4
+          const letterToNumber = { 'a': 1, 'b': 2, 'c': 3, 'd': 4 };
+          correctOptionValue = letterToNumber[correctOptionText as keyof typeof letterToNumber];
         } else {
           // Direct number like "1", "2", etc.
-          correctOptionValue = parseInt(values[6]);
+          correctOptionValue = parseInt(correctOptionText);
         }
         
         // Skip if correct_option is not a valid number
         if (isNaN(correctOptionValue) || ![1, 2, 3, 4].includes(correctOptionValue)) {
+          console.log(`Skipping row ${i}: Invalid correct_option value "${values[6]}" -> ${correctOptionValue}`);
           continue;
         }
 
