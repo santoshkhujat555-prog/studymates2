@@ -72,8 +72,18 @@ export default function QuestionUpload() {
       values.push(current.trim()); // Add the last value
       
       if (values.length >= 8) {
-        // Parse correct_option as integer, but keep other fields as strings
-        const correctOptionValue = parseInt(values[6]);
+        // Parse correct_option - handle both number format (1,2,3,4) and text format (Option 1, Option 2, etc.)
+        let correctOptionValue: number;
+        const correctOptionText = values[6].toLowerCase().trim();
+        
+        if (correctOptionText.includes('option')) {
+          // Extract number from "Option 1", "option 2", etc.
+          const match = correctOptionText.match(/option\s*(\d+)/);
+          correctOptionValue = match ? parseInt(match[1]) : NaN;
+        } else {
+          // Direct number like "1", "2", etc.
+          correctOptionValue = parseInt(values[6]);
+        }
         
         // Skip if correct_option is not a valid number
         if (isNaN(correctOptionValue) || ![1, 2, 3, 4].includes(correctOptionValue)) {
@@ -160,7 +170,8 @@ export default function QuestionUpload() {
     const csvContent = `Question ID,Question,Option 1,Option 2,Option 3,Option 4,Correct Option,Difficulty Level
 Q001,What is the capital of France?,London,Berlin,Paris,Madrid,3,easy
 Q002,Which programming language is used for web development?,Python,JavaScript,C++,Java,2,medium
-Q003,What is 2 + 2?,3,4,5,6,2,easy`;
+Q003,What is 2 + 2?,3,4,5,6,2,easy
+Q004,What is the largest planet?,Earth,Jupiter,Mars,Venus,2,hard`;
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
