@@ -83,13 +83,19 @@ export default function QuestionUpload() {
           // Extract number from "Option 1", "option 2", etc.
           const match = correctOptionText.match(/option\s*(\d+)/);
           correctOptionValue = match ? parseInt(match[1]) : NaN;
+          console.log(`Extracted from option text: ${correctOptionValue}`);
         } else if (['a', 'b', 'c', 'd'].includes(correctOptionText)) {
           // Convert A/B/C/D to 1/2/3/4
           const letterToNumber = { 'a': 1, 'b': 2, 'c': 3, 'd': 4 };
           correctOptionValue = letterToNumber[correctOptionText as keyof typeof letterToNumber];
-        } else {
+          console.log(`Converted letter to number: ${correctOptionValue}`);
+        } else if (!isNaN(parseInt(correctOptionText))) {
           // Direct number like "1", "2", etc.
           correctOptionValue = parseInt(correctOptionText);
+          console.log(`Direct number: ${correctOptionValue}`);
+        } else {
+          correctOptionValue = NaN;
+          console.log(`Could not parse: "${correctOptionText}"`);
         }
         
         // Skip if correct_option is not a valid number
@@ -137,9 +143,27 @@ export default function QuestionUpload() {
 
     try {
       const csvText = await file.text();
+      console.log("CSV content preview:", csvText.substring(0, 500));
       const questions = parseCSV(csvText);
+      console.log("Parsed questions:", questions.length);
+
+      if (questions.length === 0) {
+        toast({
+          title: "No valid questions found",
+          description: "Please check your CSV format and correct_option values",
+          variant: "destructive"
+        });
+        setIsUploading(false);
+        return;
+      }
 
       for (const question of questions) {
+        console.log("Inserting question:", { 
+          question_id: question.question_id,
+          correct_option: question.correct_option,
+          difficulty_level: question.difficulty_level 
+        });
+        
         const { error } = await supabase
           .from('questions')
           .insert({
