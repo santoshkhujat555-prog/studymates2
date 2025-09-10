@@ -1,10 +1,6 @@
-import ProfileWithFriends from '@/components/ProfileWithFriends/Profile';
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Lobby from "./pages/Lobby";
@@ -14,6 +10,12 @@ import ProfileMatch from "./pages/ProfileMatch";
 import StudyRoom from "./pages/StudyRoom";
 import QuestionUpload from "./pages/QuestionUpload";
 import NotFound from "./pages/NotFound";
+
+import ProfileWithFriends from "./components/ProfileWithFriends/Profile";
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { AuthProvider } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +36,6 @@ const App = () => (
             <Route path="/study-room/:roomId" element={<StudyRoom />} />
             <Route path="/question-upload" element={<QuestionUpload />} />
             <Route path="/old-profile" element={<Profile />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
