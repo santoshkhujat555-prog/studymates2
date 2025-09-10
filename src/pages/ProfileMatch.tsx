@@ -1,4 +1,4 @@
-import { useEffect } from 'react'; import { useNavigate } from 'react-router-dom'; import { Button } from '@/components/ui/button'; import { Card } from '@/components/ui/card'; import { useAuth } from '@/hooks/useAuth'; import { useProfileMatch } from '@/hooks/useProfileMatch'; import { ArrowLeft, Heart, X, MapPin, BookOpen, GraduationCap } from 'lucide-react'; import { motion, useMotionValue, useTransform } from 'framer-motion';
+            Import { useEffect } from 'react'; import { useNavigate } from 'react-router-dom'; import { Button } from '@/components/ui/button'; import { Card } from '@/components/ui/card'; import { useAuth } from '@/hooks/useAuth'; import { useProfileMatch } from '@/hooks/useProfileMatch'; import { ArrowLeft, Heart, X, MapPin, BookOpen, GraduationCap } from 'lucide-react'; import { motion, useMotionValue, useTransform } from 'framer-motion';
 
 const ProfileMatch = () => { const { user } = useAuth(); const navigate = useNavigate(); const { currentProfile, loadNextProfile, likeProfile, passProfile, loading } = useProfileMatch();
 
@@ -139,5 +139,5 @@ return ( <div className="min-h-screen bg-gradient-to-br from-primary/5 to-second
 
 ); };
 
-export default ProfileMatch;
-
+export default ProfileMatch
+This my old code make new that contain above feature
