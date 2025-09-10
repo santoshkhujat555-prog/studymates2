@@ -29,10 +29,11 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/lobby" element={<Lobby />} />
             <Route path="/quiz" element={<Quiz />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId?" element={<ProfileWithFriends />} />
             <Route path="/profile-match" element={<ProfileMatch />} />
             <Route path="/study-room/:roomId" element={<StudyRoom />} />
             <Route path="/question-upload" element={<QuestionUpload />} />
+            <Route path="/old-profile" element={<Profile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
