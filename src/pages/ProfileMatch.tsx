@@ -1,4 +1,4 @@
-                          import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { ArrowLeft, Heart, X, MapPin, BookOpen, GraduationCap } from 'lucide-react';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
 
@@ -11,22 +11,56 @@ import { getFirestore, doc, setDoc, getDoc, collection } from 'firebase/firestor
 // All components are in a single file to make it a self-contained app.
 
 // Mock UI components from a library like Shadcn UI
-const MockButton = ({ children, ...props }) => <button {...props} className={`p-2 rounded-md ${props.className}`}>{children}</button>;
-const MockCard = ({ children, ...props }) => <div {...props} className={`rounded-lg shadow-md bg-white ${props.className}`}>{children}</div>;
+const MockButton = ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button {...props} className={`p-2 rounded-md ${props.className}`}>{children}</button>
+);
+
+const MockCard = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div {...props} className={`rounded-lg shadow-md bg-white ${props.className}`}>{children}</div>
+);
 
 // --- Firebase and Auth Context Setup ---
 
-const AuthContext = createContext(null);
+interface Profile {
+  user_id: string;
+  full_name: string;
+  university_name?: string;
+  bio?: string;
+  branch_course?: string;
+  skills?: string[];
+  interests?: string[];
+  avatar_url?: string;
+}
 
-const useAuth = () => useContext(AuthContext);
+interface AuthContextType {
+  user: any;
+  userId: string | null;
+  db: any;
+}
 
-const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [db, setDb] = useState(null);
-  const [userId, setUserId] = useState(null);
+const AuthContext = createContext<AuthContextType | null>(null);
+
+const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<any>(null);
+  const [db, setDb] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+    
+    // Ensure firebaseConfig is not empty
+    if (Object.keys(firebaseConfig).length === 0) {
+      console.error("Firebase config is missing.");
+      return;
+    }
 
     const app = initializeApp(firebaseConfig);
     const authInstance = getAuth(app);
@@ -41,19 +75,17 @@ const AuthProvider = ({ children }) => {
           await signInAnonymously(authInstance);
         }
         const currentUser = authInstance.currentUser;
-        setUser(currentUser);
-        setUserId(currentUser.uid);
-        console.log("Firebase initialized and user signed in:", currentUser.uid);
+        if (currentUser) {
+          setUser(currentUser);
+          setUserId(currentUser.uid);
+          console.log("Firebase initialized and user signed in:", currentUser.uid);
+        }
       } catch (error) {
         console.error("Firebase Auth Error:", error);
       }
     };
 
     checkAuth();
-
-    return () => {
-      // Clean up listeners if any
-    };
   }, []);
 
   return (
@@ -65,7 +97,7 @@ const AuthProvider = ({ children }) => {
 
 // --- Mock Profile Match Hook and Data ---
 
-const mockProfiles = [
+const mockProfiles: Profile[] = [
   { user_id: 'user1', full_name: 'Alex Johnson', university_name: 'Tech University', bio: 'Passionate about AI and machine learning.', branch_course: 'Computer Science', skills: ['Python', 'Java', 'Data Science'], interests: ['Gaming', 'Hiking'] },
   { user_id: 'user2', full_name: 'Sarah Lee', university_name: 'State College', bio: 'Looking for a study buddy for organic chemistry.', branch_course: 'Chemistry', skills: ['Organic Chemistry', 'Lab Skills'], interests: ['Reading', 'Cooking'] },
   { user_id: 'user3', full_name: 'Michael Chen', university_name: 'Design Institute', bio: 'Let\'s collaborate on a UI/UX project!', branch_course: 'Graphic Design', skills: ['Figma', 'Sketch', 'Photoshop'], interests: ['Photography', 'Music'] },
@@ -74,29 +106,28 @@ const mockProfiles = [
 
 const useProfileMatch = () => {
   const { userId, db } = useAuth();
-  const [currentProfile, setCurrentProfile] = useState(null);
+  const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profiles, setProfiles] = useState([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
-    // In a real app, this would fetch profiles from Firestore
-    // For this mock, we ensure the current user's ID is not in the list
+    if (!userId) return;
     const filteredProfiles = mockProfiles.filter(p => p.user_id !== userId);
     setProfiles(filteredProfiles);
     setLoading(false);
     loadNextProfile(filteredProfiles);
   }, [userId]);
 
-  const loadNextProfile = (profileList = profiles) => {
-    const nextProfile = profileList.shift();
-    if (nextProfile) {
-      setCurrentProfile(nextProfile);
+  const loadNextProfile = (profileList: Profile[] = profiles) => {
+    if (profileList.length > 0) {
+      const nextProfile = profileList.shift();
+      setCurrentProfile(nextProfile || null);
     } else {
       setCurrentProfile(null);
     }
   };
 
-  const likeProfile = async (likedUserId) => {
+  const likeProfile = async (likedUserId: string) => {
     if (!userId || !db) {
       console.error("User or database not ready.");
       return;
@@ -118,7 +149,6 @@ const useProfileMatch = () => {
           status: 'matched',
           timestamp: new Date()
         }, { merge: true });
-        // Use a basic alert for now, since custom modals are not supported
         window.alert('It\'s a match! You are now friends!');
       } else {
         console.log("Adding like to database.");
@@ -137,12 +167,12 @@ const useProfileMatch = () => {
     }
   };
 
-  const passProfile = (passedUserId) => {
+  const passProfile = (passedUserId: string) => {
     console.log(`User ${userId} passed on user ${passedUserId}`);
     loadNextProfile();
   };
 
-  return { currentProfile, loadNextProfile, likeProfile, passProfile, loading };
+  return { currentProfile, likeProfile, passProfile, loading };
 };
 
 // --- Main App Component ---
@@ -329,4 +359,4 @@ const ProfileMatchComponent = () => {
   );
 };
 
-export default App;
+export default App;                                
