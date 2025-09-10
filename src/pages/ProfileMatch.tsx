@@ -56,7 +56,6 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
     
-    // Ensure firebaseConfig is not empty
     if (Object.keys(firebaseConfig).length === 0) {
       console.error("Firebase config is missing.");
       return;
@@ -359,4 +358,4 @@ const ProfileMatchComponent = () => {
   );
 };
 
-export default App;                                
+export default App;
