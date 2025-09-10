@@ -32,9 +32,11 @@ return ( <div className="min-h-screen bg-gradient-to-br from-primary/5 to-second
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="text-6xl font-bold text-primary/50">
-                  {(currentProfile.full_name || 'U')[0].toUpperCase()}
-                </div>
+                <img
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(currentProfile.full_name || 'User')}&background=random`}
+                  alt="Default Avatar"
+                  className="w-32 h-32 rounded-full object-cover"
+                />
               )}
             </div>
 
